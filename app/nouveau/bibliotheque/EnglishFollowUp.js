@@ -1,0 +1,142 @@
+"use client";
+
+import { useState, useSyncExternalStore } from "react";
+import Link from "next/link";
+import { CalendarDays, Video, BookOpen, MessageSquare, Clock3 } from "lucide-react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import ConvexErrorBoundary from "../_components/ConvexErrorBoundary";
+
+function displayDate(value) {
+  if (!value) return "";
+  return new Intl.DateTimeFormat("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Paris",
+  }).format(new Date(`${value}T12:00:00Z`));
+}
+
+function statusLabel(status) {
+  return {
+    pending: "Paiement en vérification",
+    confirmed: "Confirmé",
+    expired: "Créneau libéré",
+    cancelled: "Annulé",
+  }[status] || status;
+}
+
+function subscribeClock(onChange) {
+  const timer = window.setInterval(() => {
+    clockSnapshot = Date.now();
+    onChange();
+  }, 30_000);
+  return () => window.clearInterval(timer);
+}
+
+let clockSnapshot = Date.now();
+const getClock = () => clockSnapshot;
+const getServerClock = () => 0;
+
+function EnglishFollowUpContent() {
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const data = useQuery("bookings:getMyFollowUp", isAuthenticated ? {} : "skip");
+  const now = useSyncExternalStore(subscribeClock, getClock, getServerClock);
+  const rescheduleBooking = useMutation("bookings:rescheduleBooking");
+  const [reschedule, setReschedule] = useState(null);
+  const [status, setStatus] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  if (authLoading) {
+    return <div className="am-english-follow" role="status">Chargement de ton suivi…</div>;
+  }
+  if (!isAuthenticated) return <div className="am-english-follow" role="alert">Connecte-toi pour voir ton suivi.</div>;
+  if (data === undefined) {
+    return <div className="am-english-follow" role="status">Chargement de ton suivi…</div>;
+  }
+
+  const upcoming = data.bookings.find((booking) =>
+    ["pending", "confirmed"].includes(booking.status) &&
+    (booking.status !== "pending" || Number(booking.holdExpiresAt) > now) &&
+    Number.isFinite(new Date(booking.startISO).getTime()) &&
+    new Date(booking.startISO).getTime() >= now,
+  );
+  const activeEntitlements = data.entitlements.filter(
+    (entitlement) => entitlement.remainingCredits > 0 && entitlement.validUntil > now,
+  );
+  const remainingCredits = activeEntitlements.reduce((total, entitlement) => total + entitlement.remainingCredits, 0);
+  const nextOfferMode = activeEntitlements[0]?.mode || upcoming?.mode || "solo";
+
+  async function submitReschedule(event) {
+    event.preventDefault();
+    if (!reschedule || saving) return;
+    setSaving(true);
+    setStatus("");
+    try {
+      const updated = await rescheduleBooking({
+        bookingId: reschedule.bookingId,
+        date: reschedule.date,
+        time: reschedule.time,
+        idempotencyKey: reschedule.idempotencyKey,
+      });
+      try {
+        await fetch("/api/booking/notification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notificationId: updated.notificationId, bookingId: updated.id, kind: "rescheduled" }),
+        });
+      } catch {
+        // Notification delivery never changes the reservation result.
+      }
+      setReschedule(null);
+      setStatus("Ton cours a été reporté. La règle des 24 heures a été vérifiée.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      setStatus(message.includes("RESCHEDULE_TOO_LATE")
+        ? "Ce cours ne peut plus être reporté : il reste moins de 24 heures."
+        : "Ce nouveau créneau n’est pas disponible. Choisis-en un autre.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return <div className="am-english-follow">
+    <article className="am-follow-card" aria-labelledby="am-english-next-title">
+      <div className="am-follow-card-top"><span className="am-follow-badge">Cours en visio</span><Video size={25} aria-hidden="true" /></div>
+      <h2 id="am-english-next-title">Ton prochain <em>cours.</em></h2>
+      <p className="am-follow-description">Retrouve ton rendez-vous et rejoins Made sur Google Meet.</p>
+      <div className="am-follow-resource">
+        <span className="am-follow-icon"><CalendarDays size={28} aria-hidden="true" /></span>
+        <div>{upcoming ? <><h3>{displayDate(upcoming.date)} · {upcoming.time}</h3><p>{statusLabel(upcoming.status)} · Europe/Paris</p><small>En duo, vous rejoignez le même lien Meet, ensemble ou chacun depuis votre ordinateur.</small></> : <><h3>Aucun cours réservé</h3><p>Choisis un créneau d’une heure qui te convient.</p><small>Après confirmation du paiement, ton rendez-vous apparaîtra ici.</small></>}</div>
+      </div>
+      <div className="am-follow-actions">
+        <Link className="am-button" href={`/nouveau/reserver?offre=anglais&format=${nextOfferMode}`}>{upcoming ? "Réserver un autre cours" : "Réserver un cours"}</Link>
+        {upcoming?.meetUrl ? <a className="am-button am-follow-download" href={upcoming.meetUrl} target="_blank" rel="noreferrer">Rejoindre Google Meet</a> : <button className="am-button am-follow-download" type="button" disabled>Rejoindre Google Meet</button>}
+        {upcoming?.status === "confirmed" ? <button className="am-secondary-button" type="button" onClick={() => setReschedule({ bookingId: upcoming.id, date: upcoming.date, time: upcoming.time, idempotencyKey: crypto.randomUUID() })}>Reporter le cours</button> : null}
+      </div>
+      {reschedule ? <form className="am-follow-reschedule" onSubmit={submitReschedule}><label>Nouvelle date<input type="date" value={reschedule.date} onChange={(event) => setReschedule({ ...reschedule, date: event.target.value })} required /></label><label>Nouvel horaire<input type="time" value={reschedule.time} onChange={(event) => setReschedule({ ...reschedule, time: event.target.value })} required /></label><div><button className="am-button" type="submit" disabled={saving}>{saving ? "Enregistrement…" : "Confirmer le report"}</button><button className="am-secondary-button" type="button" onClick={() => setReschedule(null)}>Annuler</button></div></form> : null}
+      <div className="am-follow-credit-summary" role="status"><strong>{remainingCredits} crédit{remainingCredits > 1 ? "s" : ""} disponible{remainingCredits > 1 ? "s" : ""}</strong>{activeEntitlements.length ? <span>Valables selon la date d’expiration affichée dans ton pack.</span> : <span>Après achat d’un pack, tes heures restantes pourront être utilisées sans nouveau paiement.</span>}</div>
+      {status ? <p className="am-english-policy" role="status">{status}</p> : null}
+      <p className="am-english-policy"><em>Report possible jusqu’à 24 heures avant le cours. Passé ce délai ou en cas d’absence, la séance est décomptée, sauf exception accordée par Made.</em></p>
+    </article>
+
+    <section className="am-english-pack" aria-labelledby="am-english-pack-title">
+      <div><p className="am-eyebrow">TES HEURES DE COURS</p><h2 id="am-english-pack-title">Ton <em>pack.</em></h2></div>
+      <div className="am-english-balance"><Clock3 size={22} aria-hidden="true" /><strong>{remainingCredits}</strong><span>heure{remainingCredits > 1 ? "s" : ""} restante{remainingCredits > 1 ? "s" : ""}</span></div>
+      <div className="am-english-pack-detail"><p>{remainingCredits ? "Ton crédit est disponible pour un prochain cours." : "Aucun pack actif"}</p><small>4 heures à utiliser en 3 mois · 8 heures en 6 mois, à compter de l’achat.</small><Link href="/nouveau/anglais">Voir les formules</Link></div>
+    </section>
+
+    <section className="am-english-practice" aria-labelledby="am-english-practice-title">
+      <h2 id="am-english-practice-title">Entre deux <em>cours.</em></h2>
+      <p>Inclus dès ton premier cours acheté, à l’unité ou en pack.</p>
+      <div className="am-english-resource-grid">
+        <article><BookOpen size={27} aria-hidden="true" /><h3>Tes leçons</h3><p>Retrouve les leçons de Made pour reprendre les explications et continuer à pratiquer.</p><Link href="/nouveau/bibliotheque">Ouvrir ma bibliothèque</Link></article>
+        <article><MessageSquare size={27} aria-hidden="true" /><h3>Ton GPT d’entraînement</h3><p>Un GPT basé sur les leçons de Made pour t’entraîner sur ChatGPT entre les séances.</p><button type="button" disabled>Pratiquer sur ChatGPT</button></article>
+      </div>
+    </section>
+  </div>;
+}
+
+export default function EnglishFollowUp() {
+  return <ConvexErrorBoundary title="Ton suivi est momentanément indisponible."><EnglishFollowUpContent /></ConvexErrorBoundary>;
+}

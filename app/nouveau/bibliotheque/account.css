@@ -1,0 +1,46 @@
+.am-new .am-account{color:#111;max-width:1120px;padding-bottom:30px}
+.am-new .am-account-nav{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 28px}
+.am-new .am-account-nav a{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:9px;background:#f3f2fc;font-size:.8rem;color:#111}
+.am-new .am-account-nav a:hover{background:#e6e4f8}
+.am-new .am-account-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.am-new .am-account-card{padding:28px;border:1px solid #e5e3f1;border-radius:18px;background:white;scroll-margin-top:24px;min-width:0}
+.am-new .am-account-wide{grid-column:1/-1}
+.am-new .am-account-heading{display:flex;align-items:center;gap:12px;margin-bottom:13px}
+.am-new .am-account-heading>svg{flex-shrink:0}
+.am-new .am-account-heading h2{font-size:1.85rem;line-height:1.15}
+.am-new .am-account p{font-size:.84rem;line-height:1.75;color:#111}
+.am-new .am-account h3{font-size:.9rem;font-weight:600;letter-spacing:0}
+.am-new .am-account-profile{display:flex;align-items:center;gap:18px;margin:22px 0}
+.am-new .am-account-avatar{display:grid;place-items:center;width:62px;height:62px;flex:0 0 62px;border-radius:50%;background:#e6e4f8;color:#37345f;font-size:1.15rem;font-weight:600}
+.am-new .am-account-profile-data{display:grid;gap:12px;min-width:0}
+.am-new .am-account-profile-data div{display:grid;gap:3px}
+.am-new .am-account-profile-data dt{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:#68657b}
+.am-new .am-account-profile-data dd{font-size:.9rem;overflow-wrap:anywhere}
+.am-new .am-account-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.am-new .am-account-action{display:inline-flex;align-items:center;justify-content:center;border:1px solid #c9c6d5;border-radius:8px;padding:10px 13px;background:#fff;color:#111;font-family:var(--font-poppins),sans-serif;font-weight:600;font-size:.76rem;line-height:1.5;text-align:left;cursor:pointer}
+.am-new .am-account-action:hover{background:#f3f2fc;border-color:#aaa7bf}
+.am-new .am-account-muted{font-size:.76rem;color:#68657b}
+.am-new .am-account .am-button{font-size:.8rem;padding:12px 16px}
+.am-new .am-account-row{display:flex;align-items:center;gap:16px;justify-content:space-between;margin:22px 0}
+.am-new .am-account-row p{margin-top:5px}
+.am-new .am-account-state{margin:22px 0 0;padding:18px;border-radius:12px;background:#f6f5fc}
+.am-new .am-account-state-error{background:#fff5f3;border:1px solid #f0cfca}
+.am-new .am-account-state-error p{margin:0 0 12px}
+.am-new .am-account-empty{display:flex;align-items:center;gap:18px;background:#f6f5fc;padding:24px;border-radius:12px;margin-top:22px}
+.am-new .am-account-empty>svg{flex-shrink:0}
+.am-new .am-account-purchases{display:grid;gap:12px;margin:22px 0 0;padding:0;list-style:none}
+.am-new .am-account-purchase{padding:18px 20px;border:1px solid #e5e3f1;border-radius:12px;background:#fff}
+.am-new .am-account-purchase-top{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.am-new .am-account-purchase-top p{margin-top:5px;color:#68657b}
+.am-new .am-account-purchase-status{display:grid;gap:4px;flex-shrink:0;text-align:right}
+.am-new .am-account-purchase-status strong{font-size:.78rem;color:#37345f}
+.am-new .am-account-purchase-status span,.am-new .am-account-purchase-status time{font-size:.74rem;color:#68657b}
+.am-new .am-account-purchase-link{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-size:.78rem;font-weight:600;color:#37345f}
+.am-new .am-account-purchase-link:hover{text-decoration:underline}
+.am-new .am-account-note{padding:18px;border-radius:10px;background:#f6f5fc;margin-top:22px}
+.am-new .am-account-note p{margin-top:8px}
+.am-new .am-account-note a{font-weight:600;color:#37345f}
+.am-new .am-account-data-actions{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 0}
+.am-new .am-account-data-actions a{white-space:normal}
+@media(max-width:1000px){.am-new .am-account-grid{grid-template-columns:1fr}.am-new .am-account-wide{grid-column:auto}}
+@media(max-width:620px){.am-new .am-account-card{padding:20px}.am-new .am-account-row{flex-direction:column;align-items:start}.am-new .am-account-purchase-top{flex-direction:column}.am-new .am-account-purchase-status{text-align:left}.am-new .am-account-data-actions{flex-direction:column;align-items:stretch}.am-new .am-account-data-actions a{width:100%}}

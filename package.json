@@ -1,0 +1,47 @@
+{
+  "name": "animation-made",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "eslint",
+    "preflight:production": "node scripts/preflight-production.mjs",
+    "studio": "sanity dev",
+    "verify:sanity": "node scripts/verify-sanity.mjs",
+    "seed:sanity": "node scripts/seed-sanity.mjs",
+  "verify:auth-foundation": "node scripts/verify-auth-foundation.mjs",
+  "verify:owner-administration": "node scripts/verify-owner-administration.mjs",
+  "verify:booking-connected": "node scripts/verify-booking-connected.mjs",
+    "verify:booking-external": "node scripts/verify-booking-external-config.mjs",
+    "verify:client-orders": "node scripts/verify-non-english-orders.mjs",
+    "verify:review-studio": "node scripts/verify-review-studio.mjs",
+    "verify:review-submissions": "node scripts/verify-review-submissions.mjs",
+    "verify:delivery-notifications": "node scripts/verify-delivery-notifications.mjs",
+    "verify:stripe-contract": "node scripts/verify-stripe-contract.mjs"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^7.9.4",
+    "@sanity/client": "^8.6.2",
+    "convex": "^1.46.0",
+    "lenis": "^1.3.23",
+    "lucide-react": "^1.17.0",
+    "next": "16.2.6",
+    "next-sanity": "^13.3.4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-markdown": "^10.1.0",
+    "rehype-raw": "^7.0.0",
+    "remark-breaks": "^4.0.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@sanity/vision": "^6.15.0",
+    "@tailwindcss/postcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "sanity": "^6.15.0",
+    "tailwindcss": "^4"
+  }
+}

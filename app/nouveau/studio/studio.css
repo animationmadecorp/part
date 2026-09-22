@@ -1,0 +1,45 @@
+.am-correction-studio{max-width:1400px;margin:auto;padding:48px 30px 70px}
+.am-correction-studio>header{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;margin-bottom:32px}
+.am-correction-studio h1{font-size:clamp(2.6rem,5vw,4.5rem);margin:12px 0}
+.am-correction-studio header>p:last-child{font-size:.95rem}
+.am-correction-studio .rv{background:white;border:1px solid #e5e3f3;border-radius:24px;padding:24px}
+.am-correction-studio .rv-drop{background:#f6f5fc;border-radius:18px;padding:80px 24px;text-align:center}
+.am-correction-studio .rv-grid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:24px}
+.am-correction-studio .rv-stage{position:relative;background:#f2f0f9;border-radius:14px;overflow:hidden;container-type:inline-size}
+.am-correction-studio .rv-textbox{position:absolute;z-index:2;max-width:85%;white-space:pre-wrap;overflow-wrap:anywhere;text-align:left;background:#181624cc;border:1px solid transparent;border-radius:6px;padding:.35em .55em;line-height:1.35;cursor:move;touch-action:none;font-weight:600}
+.am-correction-studio .rv-textbox[data-selected=true]{border-color:white;outline:2px solid var(--am-lavender)}
+.am-correction-studio .rv-textbox textarea{display:block;width:14em;max-width:100%;box-sizing:border-box;background:transparent;color:inherit;font:inherit;line-height:inherit;border:0;padding:0;resize:none;outline:none;cursor:text}
+.am-correction-studio .rv-textbox textarea::placeholder{color:inherit;opacity:.7}
+.am-correction-studio .rv-text-handle{display:none}
+.am-correction-studio .rv-textbox{padding:.55em .65em;font-weight:700}
+.am-correction-studio .rv-textbox textarea{font-weight:700}
+.am-correction-studio .rv-text-delete{margin-top:10px;text-align:right}
+.am-correction-studio .rv-text-editor{display:flex;flex-wrap:wrap;align-items:end;gap:14px;background:#f6f5fc;border:0;border-radius:14px;padding:18px;font-size:.8rem}
+.am-correction-studio .rv-text-editor label{display:flex;flex-direction:column;gap:6px}
+.am-correction-studio .rv-text-editor label:first-of-type{flex-basis:100%}
+.am-correction-studio .rv-text-editor textarea{width:100%;min-height:70px;background:white;border:1px solid #dedbec;border-radius:8px;padding:10px;color:#222}
+.am-correction-studio .rv-text-editor input[type=number]{width:90px;background:white;border:1px solid #dedbec;padding:8px;border-radius:8px}
+.am-correction-studio .rv-video{display:block;width:100%;height:auto;max-height:none}
+.am-correction-studio .rv-canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.am-correction-studio .rv-transport,.am-correction-studio .rv-tools{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:16px 0}
+.am-correction-studio :is(.rv-btn,.pill){background:var(--am-lavender);color:white;border:0;border-radius:10px;padding:10px 16px;font-weight:700}
+.am-correction-studio .rv-play,.am-correction-studio .btn-primary{background:var(--am-yellow);color:white}
+.am-correction-studio .rv-btn-text{background:#f3f1fb;color:#393547;border:0;border-radius:8px;padding:9px 12px;font-size:.75rem}
+.am-correction-studio .rv-tools{background:#f8f7fc;padding:16px;border-radius:14px;font-size:.78rem}
+.am-correction-studio .rv-swatch{width:28px;height:28px;border:2px solid white;border-radius:50%}
+.am-correction-studio .rv-swatch.on{outline:2px solid #7772b3;outline-offset:2px}
+.am-correction-studio .rv-side{background:#f8f7fc;border:0;border-radius:16px;padding:20px;max-height:700px;overflow:auto}
+.am-correction-studio .rv-side h3{font-size:1.5rem}
+.am-correction-studio .input{min-width:0;width:100%;background:white;border:1px solid #dedbec;border-radius:9px;padding:12px;color:#222}
+.am-correction-studio .rv-comment{display:flex;flex-direction:column;text-align:left;gap:8px;background:white;border:1px solid #e5e3f3;border-radius:12px;padding:14px;font-size:.85rem}
+.am-correction-studio .rv-tc,.am-correction-studio .rv-frametag{font-size:.72rem;font-weight:600}
+.am-correction-studio .rv-frametag{background:var(--am-lavender);color:white;border:0;border-radius:8px;padding:8px}
+.am-correction-studio .rv-timeline{position:relative;padding:12px 0;background:#f6f5fc;border-radius:10px;margin:8px 0}
+.am-correction-studio .rv-markers{position:absolute;top:6px;width:100%;height:10px}
+.am-correction-studio .rv-mk-dot,.am-correction-studio .rv-mk-bar{position:absolute;background:var(--am-yellow);height:10px;min-width:10px;border:0;border-radius:8px}
+.am-correction-studio .rv-scrub{width:100%;accent-color:var(--am-lavender)}
+.am-correction-studio .rv-save-note{font-size:.75rem;font-style:italic;margin-top:18px}
+.am-studio-back{display:inline-flex;margin-bottom:24px;color:var(--am-lavender);font-size:.82rem;font-weight:700}.am-studio-context{min-width:260px;border:1px solid #e5e3f3;border-radius:14px;background:#f6f5fc;padding:16px}.am-studio-context span,.am-studio-context small{display:block;color:#6b6879;font-size:.7rem}.am-studio-context strong{display:block;margin:6px 0;font-size:.9rem}.am-studio-context-warning{margin:-12px 0 24px;border-radius:10px;background:#f6f5fc;padding:12px 14px;font-size:.78rem}.am-correction-studio .rv-ready{display:flex;align-items:center;flex-wrap:wrap;gap:12px 20px;margin-top:22px;border-radius:14px;background:#f6f5fc;padding:18px}.am-correction-studio .rv-ready>div{margin-right:auto}.am-correction-studio .rv-ready h3{font-size:1rem}.am-correction-studio .rv-ready p{font-size:.75rem}.am-correction-studio .rv-ready>a{font-size:.78rem;font-weight:700;text-decoration:underline}.am-correction-studio .rv-ready-confirmation{flex-basis:100%;color:#4c6654}
+.am-correction-studio :is(button,input,select):focus-visible{outline:3px solid #7772b3;outline-offset:3px}
+.am-correction-studio :is(button,input,select):disabled{opacity:var(--am-disabled-opacity);cursor:not-allowed;transform:none}
+@media(max-width:850px){.am-correction-studio .rv-grid{grid-template-columns:1fr}.am-correction-studio{padding:24px 14px}.am-correction-studio .rv{padding:14px}.am-correction-studio>header{align-items:stretch;flex-direction:column}.am-studio-context{min-width:0}.am-correction-studio .rv-ready{align-items:stretch;flex-direction:column}.am-correction-studio .rv-ready>div{margin:0}}

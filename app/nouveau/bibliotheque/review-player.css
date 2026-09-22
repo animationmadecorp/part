@@ -1,0 +1,30 @@
+.am-new .am-review-player{margin:28px 0}
+.am-new .am-review-stage{container-type:inline-size}
+.am-new .am-review-textbox{position:absolute;max-width:85%;white-space:pre-wrap;overflow-wrap:anywhere;text-align:left;background:#181624cc;border:1px solid transparent;border-radius:6px;padding:.35em .55em;line-height:1.35;font-weight:600;pointer-events:none}
+.am-new .am-review-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(180px,1fr);gap:22px}
+.am-new .am-review-stage{position:relative;background:#f1effa;border-radius:16px;overflow:hidden;max-height:600px;margin:auto}
+.am-new .am-review-stage video{display:block;width:100%;height:100%}
+.am-new .am-review-stage svg[viewBox]{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.am-new .am-review-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:24px;gap:12px}
+.am-new .am-review-empty>svg{color:var(--am-lavender);flex-shrink:0}
+.am-new .am-review-empty h3{font-size:1rem;font-weight:600}
+.am-new .am-review-empty p,.am-new .am-review-notes>p{font-size:.8rem;line-height:1.8}
+.am-new .am-review-transport{display:flex;align-items:center;gap:8px;margin:16px 0 8px;flex-wrap:wrap}
+.am-new .am-review-transport button{display:grid;place-items:center;width:38px;height:38px;background:var(--am-lavender);color:white;border:0;border-radius:50%}
+.am-new .am-review-transport button:nth-child(2){background:var(--am-yellow)}
+.am-new .am-review-player button:disabled{opacity:.5;cursor:not-allowed}
+.am-new .am-review-transport span{font-size:.72rem;margin-left:auto;font-variant-numeric:tabular-nums}
+.am-new .am-review-range{width:100%;accent-color:var(--am-lavender)}
+.am-new .am-review-toggle{display:flex;align-items:center;gap:8px;font-size:.76rem;margin-top:12px}
+.am-new .am-review-toggle input{accent-color:var(--am-lavender)}
+.am-new .am-review-notes{background:#f8f7fc;padding:20px;border-radius:16px;max-height:460px;overflow:auto}
+.am-new .am-review-notes h3{font-size:1rem;font-weight:600;margin-bottom:16px}
+.am-new .am-review-notes button{text-align:left;background:white;border:1px solid #e5e3f3;border-radius:12px;padding:12px;width:100%;margin-bottom:10px}
+.am-new .am-review-notes button span{font-size:.7rem;font-weight:600}
+.am-new .am-review-notes button p{font-size:.8rem;margin-top:8px}
+.am-new .am-review-preview{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:22px}
+.am-new .am-review-preview button,.am-new .am-review-marks button{background:var(--am-lavender);color:white;border:0;border-radius:9px;padding:10px 14px;font-weight:700;font-size:.75rem}
+.am-new .am-review-preview small{font-size:.7rem}
+.am-new .am-review-marks{display:flex;gap:6px;flex-wrap:wrap}
+.am-new .am-review-player :is(button,input):focus-visible{outline:3px solid #7772b3;outline-offset:3px}
+@media(max-width:700px){.am-new .am-review-layout{grid-template-columns:1fr}.am-new .am-review-empty{padding:16px}.am-new .am-review-empty p{font-size:.7rem}.am-new .am-review-stage{min-height:200px}}

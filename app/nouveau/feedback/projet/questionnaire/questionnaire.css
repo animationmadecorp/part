@@ -1,0 +1,28 @@
+.am-new .am-project-questionnaire{max-width:860px;padding:40px 0 64px}
+.am-new .am-project-back{display:inline-flex;align-items:center;font-size:.82rem;text-decoration:underline;text-underline-offset:4px}
+.am-new .am-project-eyebrow{margin-top:32px}
+.am-new .am-project-title{font-size:clamp(2.5rem,5vw,4rem);margin:16px 0}
+.am-new .am-project-intro{max-width:66ch;line-height:1.75;color:#626377}
+.am-new .am-project-form{margin-top:32px}
+.am-new .am-project-form fieldset{border:0;padding:0;margin:0;min-width:0}
+.am-new .am-project-field{display:grid;gap:10px;margin-bottom:24px;line-height:1.45}
+.am-new .am-project-select-wrap{position:relative;display:block}
+.am-new .am-project-select{padding-right:52px}
+.am-new .am-project-select-icon{position:absolute;right:18px;top:50%;transform:translateY(-50%);pointer-events:none}
+.am-new .am-project-references{padding:24px;background:#f7f6fc;border-radius:16px;margin:8px 0 30px}
+.am-new .am-project-reference-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+.am-new .am-project-reference-heading h2{font:600 1rem var(--font-poppins),sans-serif;margin:0}
+.am-new .am-project-reference-heading span{font-size:.75rem;font-style:italic}
+.am-new .am-project-references>label{display:block;font-size:.8rem;margin-bottom:8px}
+.am-new .am-project-references .am-field-control{display:block;font-size:.85rem}
+.am-new .am-project-attachment-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.am-new .am-project-attachment-row span{font-size:.75rem}
+.am-new .am-project-references details{font-size:.73rem;margin-top:18px}
+.am-new .am-project-references summary{cursor:pointer}
+.am-new .am-project-references details p{font-size:inherit;line-height:1.7;margin-top:8px}
+.am-new .am-project-references ul{list-style:none;padding:0;margin:14px 0 0}
+.am-new .am-project-references li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;font-size:.8rem}
+.am-new .am-project-references li span{overflow-wrap:anywhere;min-width:0}
+.am-new .am-project-references li button{background:none;border:0;text-decoration:underline;flex-shrink:0}
+.am-new .am-project-references :is(button,textarea,summary):focus-visible{outline:3px solid #7772b3;outline-offset:3px}
+@media(max-width:600px){.am-new .am-project-questionnaire{padding:28px 0 48px}.am-new .am-project-references{padding:18px}.am-new .am-project-title{font-size:clamp(2.35rem,12vw,3.4rem)}}

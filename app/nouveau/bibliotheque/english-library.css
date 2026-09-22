@@ -1,0 +1,323 @@
+.am-english-library {
+  margin-top: 35px;
+  padding: 28px;
+  border: 1px solid var(--am-line);
+  border-radius: 14px;
+  background: var(--am-lavender, #e7e7fa);
+  color: #111111;
+}
+
+.am-english-library-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 25px;
+}
+
+.am-english-library-header h2 {
+  margin: 9px 0 12px;
+  font-size: clamp(2rem, 3.3vw, 3rem);
+}
+
+.am-english-library-header .am-eyebrow,
+.am-english-library-header h2,
+.am-english-library-header h2 em {
+  color: #ffffff;
+}
+
+.am-english-library-header > div:first-child > p:last-child {
+  max-width: 620px;
+  color: #ffffff;
+  font-size: .82rem;
+}
+
+.am-english-progress {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: none;
+  padding: 10px 13px;
+  border: 1px solid #ffffff90;
+  border-radius: 9px;
+  background: #ffffff20;
+  color: #ffffff;
+}
+
+.am-english-progress strong {
+  font: 1.5rem Georgia, serif;
+}
+
+.am-english-progress span {
+  font-size: .7rem;
+}
+
+.am-english-library-header-actions {
+  display: flex;
+  flex: none;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.am-english-resume {
+  max-width: 240px;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  font-size: .72rem;
+  font-weight: 500;
+  text-align: right;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.am-new .am-english-resume {
+  color: #ffffff;
+}
+
+.am-english-library-header :is(button, a):focus-visible,
+.am-english-library-locked :is(button, a):focus-visible,
+.am-english-library-error :is(button, a):focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.am-english-lesson-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px;
+  margin-top: 24px;
+}
+
+.am-english-lesson-card {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+  padding: 14px 15px;
+  border: 1px solid #ffffff;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #111111;
+  text-align: left;
+  transition: transform .2s, border-color .2s;
+}
+
+.am-english-lesson-card:hover,
+.am-english-lesson-card[aria-current="true"] {
+  border-color: var(--am-plum);
+  transform: translateY(-2px);
+}
+
+.am-english-lesson-number {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #ededfc;
+  color: #57548b;
+  font: italic 1rem Georgia, serif;
+}
+
+.am-english-lesson-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.am-english-lesson-copy small,
+.am-english-lesson-copy > span {
+  color: #626377;
+  font-size: .68rem;
+}
+
+.am-english-lesson-copy strong {
+  overflow-wrap: anywhere;
+  font-size: .86rem;
+  font-weight: 500;
+}
+
+.am-english-lesson-check {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  color: var(--am-plum);
+}
+
+.am-english-lesson-check.is-complete {
+  background: #dff2e4;
+  color: #287044;
+}
+
+.am-english-reader {
+  position: relative;
+  margin-top: 24px;
+  padding: 30px;
+  border: 1px solid var(--am-line);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.am-english-reader h3 {
+  max-width: calc(100% - 35px);
+  margin: 8px 0 24px;
+  font: clamp(1.7rem, 3vw, 2.5rem)/1.1 Georgia, serif;
+}
+
+.am-english-reader h3:focus-visible {
+  outline: 3px solid #6461a4;
+  outline-offset: 6px;
+}
+
+.am-english-reader-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: #ededfc;
+  color: var(--am-plum);
+}
+
+.am-english-reader-body {
+  max-width: 850px;
+  overflow-wrap: anywhere;
+}
+
+.am-english-reader-body .en-prose table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.am-english-reader-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+
+.am-english-reader-actions > span {
+  color: #626377;
+  font-size: .74rem;
+}
+
+.am-english-action-error {
+  margin-top: 15px!important;
+  color: #9e2f38;
+  font-size: .78rem!important;
+}
+
+.am-english-state {
+  margin: 5px 0;
+  color: #626377;
+  font-size: .82rem;
+}
+
+.am-english-library-locked,
+.am-english-library-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.am-english-library-locked > svg,
+.am-english-library-error > svg {
+  flex: none;
+  margin-top: 2px;
+  color: #ffffff;
+}
+
+.am-english-library-locked .am-eyebrow,
+.am-english-library-error .am-eyebrow {
+  color: #ffffff;
+}
+
+.am-english-library-locked h2,
+.am-english-library-error h2 {
+  margin: 7px 0 8px;
+  font: clamp(1.5rem, 2.5vw, 2.1rem)/1.1 Georgia, serif;
+  color: #ffffff;
+}
+
+.am-english-library-locked p:not(.am-eyebrow),
+.am-english-library-error p:not(.am-eyebrow) {
+  color: #ffffff;
+  font-size: .82rem;
+}
+
+.am-english-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 15px;
+  color: #ffffff;
+  font-size: .78rem;
+  font-weight: 500;
+}
+
+.am-new .am-english-link {
+  color: #ffffff;
+}
+
+@media (max-width: 760px) {
+  .am-english-library {
+    margin-top: 25px;
+    padding: 20px 16px;
+  }
+
+  .am-english-library-header {
+    display: block;
+  }
+
+  .am-english-progress {
+    display: inline-flex;
+    margin-top: 18px;
+  }
+
+  .am-english-library-header-actions {
+    align-items: flex-start;
+  }
+
+  .am-english-resume {
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .am-english-lesson-grid {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .am-english-lesson-card {
+    grid-template-columns: 35px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .am-english-lesson-number {
+    width: 32px;
+    height: 32px;
+  }
+
+  .am-english-reader {
+    margin-right: -2px;
+    margin-left: -2px;
+    padding: 24px 16px;
+  }
+
+  .am-english-reader-actions .am-button {
+    width: 100%;
+  }
+}
