@@ -16,9 +16,9 @@ Créer et vérifier un espace Administration unifié pour Animation Made : une p
 - [x] Luna Max : implémentation cohérente et revue Astra persistante.
 - [x] Astra : identité Google vérifiée auprès de Clerk ; profil Convex correspondant déjà admin. Comparaison sans divulgation : clés Clerk et URL Convex locales identiques à celles de production.
 - [x] Astra : accepter le diff et les preuves.
-- [ ] Héberger Studio, configurer son URL et le rafraîchissement, déployer le résultat autorisé.
-- [ ] Vérifier refus client, accès propriétaire et lecture Sanity ; retirer la fiche de test quand sa démonstration est terminée.
-- [ ] Archiver Luna après acceptation.
+- [x] Héberger Studio, configurer son URL et le rafraîchissement, déployer le résultat autorisé.
+- [x] Vérifier politique de refus membre (tests locaux), refus anonyme distant, accès propriétaire distant et lecture Sanity ; archiver la fiche de test.
+- [x] Archiver Luna après acceptation.
 
 ## Preuves de démarrage
 Worker : 01a0c8b9-73de-7ce0-bde4-a646bfddd729. Métadonnée runtime turn_context contrôlée : gpt-5.6-luna / max, cwd du projet. Accusé goal actif/exact reçu avant implémentation. Studio dry-run compile ; exclusion du public/ du site demandée avant publication.
@@ -33,3 +33,11 @@ Worker : 01a0c8b9-73de-7ce0-bde4-a646bfddd729. Métadonnée runtime turn_context
 - Vercel est lié au dépôt GitHub animationmadecorp/part, branche de production main : la publication utilisera les fichiers suivis uniquement.
 - Premier checkpoint reviewer NON PASS : matcher proxy /admin racine, rendu sans provider Clerk en configuration absente, variantes d'URL loopback, contrastes. Luna corrige avant nouvelle revue ; aucun déploiement du site à ce stade.
 - Revue cumulative finale PASS après corrections, aucun constat actionnable. Build Next 16 webpack PASS, lint 0 erreur (5 avertissements Convex générés), vérificateurs admin/auth/propriétaire/fallback PASS, contrôle indépendant parent admin/auth/Sanity et diff-check PASS. Diff accepté pour publication.
+
+## Recette distante terminée
+- Commit applicatif cec1a9f poussé ; déploiement dpl_4BcRfWiiLv9hd9Ty5XiCQhbFFo7V READY (58 secondes), alias animation-made.com et www.animation-made.com.
+- Session propriétaire existante : /admin HTTP 200 avec les 4 accès et URL Studio ; bibliothèque HTTP 200 avec entrée Administration. Sans connexion, aucune carte admin n'est exposée et un écran de connexion est rendu. Aucun rôle modifié.
+- /api/sanity/status : publicReadReady et revalidationReady vrais, repli 60 secondes.
+- Webhook sJ6KkxyANmykCRBz activé. Modification du titre de la fiche am-resource-addon-test-sanity-20260922 : notification HTTP 200, nouveau titre constaté dans la bibliothèque réelle. Puis statut archived : seconde notification HTTP 200, fiche absente de la bibliothèque. Archivage réversible, aucune vraie ressource supprimée.
+- Logs Vercel du nouveau déploiement sur les 10 dernières minutes : zéro entrée de niveau erreur au contrôle.
+- Worker accepté et archivé. Téléchargement d'un vrai ZIP add-on reste hors périmètre : Sanity gère ici sa présentation, pas encore la livraison d'un nouveau fichier.
