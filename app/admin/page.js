@@ -87,6 +87,8 @@ export default async function AdminHomePage() {
           <AdminContentCard studio={studio} />
         </section>
 
+        <p className="am-admin-articles-link"><Link href="/nouveau/articles">Articles publics →</Link>{studio.configured && <> · <a href={studio.url} target="_blank" rel="noreferrer noopener">Créer ou modifier un article dans Sanity ↗</a></>}</p>
+
         <details className="am-admin-technical">
           <summary>État technique</summary>
           <div className="am-admin-technical-body">

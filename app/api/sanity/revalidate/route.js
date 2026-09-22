@@ -2,7 +2,7 @@ import { parseBody } from "next-sanity/webhook";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { SANITY_EDITORIAL_TAG } from "@/lib/sanity/queries";
 
-const EDITORIAL_TYPES = new Set(["siteSettings", "page", "offer", "resourcePresentation", "faq"]);
+const EDITORIAL_TYPES = new Set(["siteSettings", "page", "offer", "resourcePresentation", "faq", "article"]);
 
 export async function POST(request) {
   const secret = process.env.SANITY_REVALIDATE_SECRET;
@@ -24,6 +24,10 @@ export async function POST(request) {
     revalidatePath("/nouveau");
     revalidatePath("/nouveau/faq");
     revalidatePath("/nouveau/bibliotheque");
+    if (body._type === "article") {
+      revalidatePath("/nouveau/articles");
+      revalidatePath("/nouveau/articles/[slug]", "page");
+    }
 
     return Response.json({ revalidated: true, type: body._type, tag: SANITY_EDITORIAL_TAG });
   } catch (error) {
