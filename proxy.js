@@ -22,6 +22,7 @@ export const config = {
     "/nouveau/studio/:path*",
     "/nouveau/reserver/:path*",
     "/nouveau/confirmation/:path*",
+    "/admin/:path*",
     "/admin/disponibilites/:path*",
     "/admin/reservations/:path*",
     "/sign-in/:path*",

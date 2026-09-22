@@ -22,7 +22,7 @@ const sections = [
 
 const englishFollowUpHref = "/nouveau/bibliotheque?onglet=suivi&suivi=anglais";
 
-export default function Account() {
+export default function Account({ isAdmin = false }) {
   const { openUserProfile, signOut } = useClerk();
   const { isLoaded: clerkLoaded, isSignedIn, user } = useUser();
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
@@ -60,10 +60,13 @@ export default function Account() {
   const canManageAccount = clerkLoaded && Boolean(isSignedIn && user);
   const dataRequestHref = `mailto:${businessIdentity.email}?subject=${encodeURIComponent("Demande concernant mes données personnelles")}`;
   const receiptRequestHref = `mailto:${businessIdentity.email}?subject=${encodeURIComponent("Demande de justificatif de paiement")}`;
+  const accountSections = isAdmin
+    ? [...sections, ["administration", "Administration", ShieldCheck]]
+    : sections;
 
   return <div className="am-account">
     <header className="am-library-title"><p className="am-eyebrow">TES INFORMATIONS ET TES CHOIX</p><h1>Mon <em>compte.</em></h1><p>Retrouve ton profil, tes achats et les réglages de ton espace.</p></header>
-    <nav className="am-account-nav" aria-label="Rubriques du compte">{sections.map(([id, label, Icon]) => <a key={id} href={`#compte-${id}`}><Icon size={17} aria-hidden="true"/>{label}</a>)}</nav>
+    <nav className="am-account-nav" aria-label="Rubriques du compte">{accountSections.map(([id, label, Icon]) => <a key={id} href={`#compte-${id}`}><Icon size={17} aria-hidden="true"/>{label}</a>)}</nav>
 
     <div className="am-account-grid">
       <section className="am-account-card" id="compte-profil" aria-labelledby="profil-title">
@@ -84,6 +87,12 @@ export default function Account() {
         <div className="am-account-row"><div><h3>Réglages de sécurité</h3><p>Mot de passe, vérifications et appareils connectés sont gérés dans ton espace sécurisé.</p></div>{canManageAccount ? <button type="button" className="am-account-action" onClick={() => openUserProfile({ __experimental_startPath: "/security" })}>Gérer la sécurité</button> : <span className="am-account-muted">Reconnecte-toi pour gérer ces réglages.</span>}</div>
         {canManageAccount ? <button type="button" className="am-account-action" onClick={() => signOut({ redirectUrl: "/nouveau" })}>Me déconnecter</button> : null}
       </section>
+
+      {isAdmin && <section className="am-account-card am-account-wide am-account-admin" id="compte-administration" aria-labelledby="administration-title">
+        <div className="am-account-heading"><ShieldCheck aria-hidden="true"/><h2 id="administration-title">Administration</h2></div>
+        <p>Retrouve les demandes, les réservations, les disponibilités et les contenus de ton activité.</p>
+        <div className="am-account-data-actions"><Link className="am-account-action" href="/admin">Ouvrir l’espace Administration <ArrowRight size={14} aria-hidden="true"/></Link></div>
+      </section>}
 
       <section className="am-account-card am-account-wide" id="compte-achats" aria-labelledby="achats-title">
         <div className="am-account-heading"><ReceiptText aria-hidden="true"/><h2 id="achats-title">Achats et justificatifs</h2></div>

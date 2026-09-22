@@ -11,9 +11,10 @@
     "studio": "sanity dev",
     "verify:sanity": "node scripts/verify-sanity.mjs",
     "seed:sanity": "node scripts/seed-sanity.mjs",
-  "verify:auth-foundation": "node scripts/verify-auth-foundation.mjs",
-  "verify:owner-administration": "node scripts/verify-owner-administration.mjs",
-  "verify:booking-connected": "node scripts/verify-booking-connected.mjs",
+    "verify:admin-unified": "node scripts/verify-admin-unified.mjs",
+    "verify:auth-foundation": "node scripts/verify-auth-foundation.mjs",
+    "verify:owner-administration": "node scripts/verify-owner-administration.mjs",
+    "verify:booking-connected": "node scripts/verify-booking-connected.mjs",
     "verify:booking-external": "node scripts/verify-booking-external-config.mjs",
     "verify:client-orders": "node scripts/verify-non-english-orders.mjs",
     "verify:review-studio": "node scripts/verify-review-studio.mjs",
@@ -34,7 +35,8 @@
     "react-markdown": "^10.1.0",
     "rehype-raw": "^7.0.0",
     "remark-breaks": "^4.0.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "styled-components": "^6.5.3"
   },
   "devDependencies": {
     "@sanity/vision": "^6.15.0",

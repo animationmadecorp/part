@@ -7,6 +7,10 @@
 @media(max-width:760px){.am-product aside{grid-row:auto}}
 @media(prefers-reduced-motion:reduce){.am-new *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
+.am-new .am-sidebar nav a.am-sidebar-admin-link{display:flex;align-items:center;gap:11px;background:#ddddf7;border-radius:8px;color:#45416f;font-size:.82rem;font-weight:500;padding:14px 12px}.am-new .am-sidebar nav a.am-sidebar-admin-link:hover{background:#d3d1f1}
+@media(max-width:760px){.am-new .am-sidebar nav a.am-sidebar-admin-link{font-size:.71rem;padding:10px 8px;gap:6px}.am-new .am-sidebar nav a.am-sidebar-admin-link svg{width:15px}}
+@media(max-width:390px){.am-new .am-sidebar nav a.am-sidebar-admin-link{font-size:.65rem;padding:9px 5px}}
+
 /* Pages d'information, de contact et conditions */
 .am-new .am-footer{align-items:flex-start;border-top:1px solid var(--am-line)}
 .am-new .am-footer-intro{display:grid;gap:10px;max-width:390px}

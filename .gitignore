@@ -37,6 +37,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# generated local Sanity Studio runtime
+/.sanity/
+
+# generated Studio build output
+/dist/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

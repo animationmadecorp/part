@@ -1,17 +1,16 @@
 import nextEnv from "@next/env";
 import { createClient } from "@sanity/client";
+import { writeFile } from "node:fs/promises";
 import { editorialFallback } from "../app/nouveau/_data/content.js";
 import { getSanityEnvironment } from "../sanity/project.js";
 
 const { loadEnvConfig } = nextEnv;
-loadEnvConfig(process.cwd());
-
-const { projectId, dataset, apiVersion, conflictFields = [] } = getSanityEnvironment();
-const token = process.env.SANITY_WRITE_TOKEN || "";
 const force = process.argv.includes("--force");
+const ndjson = process.argv.includes("--ndjson");
+const exportFile = process.argv.find((argument) => argument.startsWith("--export-file="))?.slice("--export-file=".length);
 
 function documentId(kind, stableId) {
-  return `editorial.${kind}.${stableId.replace(/[^a-zA-Z0-9_-]+/g, "-")}`;
+  return `am-${kind}-${stableId.replace(/[^a-zA-Z0-9_-]+/g, "-")}`;
 }
 
 function arrayKey(prefix, value, index) {
@@ -112,7 +111,7 @@ function toFaqDocument(faq) {
 function initialDocuments() {
   return [
     {
-      _id: "editorial.site-settings.animation-made",
+      _id: "am-site-settings-animation-made",
       _type: "siteSettings",
       ...editorialFallback.siteSettings,
     },
@@ -124,6 +123,21 @@ function initialDocuments() {
 }
 
 async function main() {
+  if (exportFile) {
+    await writeFile(exportFile, `${initialDocuments().map((document) => JSON.stringify(document)).join("\n")}\n`);
+    console.log(`Catalogue Sanity exporté vers ${exportFile}.`);
+    return;
+  }
+  if (ndjson) {
+    for (const document of initialDocuments()) {
+      process.stdout.write(`${JSON.stringify(document)}\n`);
+    }
+    return;
+  }
+
+  loadEnvConfig(process.cwd());
+  const { projectId, dataset, apiVersion, conflictFields = [] } = getSanityEnvironment();
+  const token = process.env.SANITY_WRITE_TOKEN || "";
   const missing = [];
   if (conflictFields.length) missing.push(`configuration conflict: ${conflictFields.join(", ")}`);
   if (!dataset) missing.push("SANITY_DATASET/NEXT_PUBLIC_SANITY_DATASET");

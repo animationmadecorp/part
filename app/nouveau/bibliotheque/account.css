@@ -40,6 +40,8 @@
 .am-new .am-account-note{padding:18px;border-radius:10px;background:#f6f5fc;margin-top:22px}
 .am-new .am-account-note p{margin-top:8px}
 .am-new .am-account-note a{font-weight:600;color:#37345f}
+.am-new .am-account-admin{border-color:#c9c6e6;background:#fbfaff}
+.am-new .am-account-admin .am-account-heading>svg{color:#5f5b9d}
 .am-new .am-account-data-actions{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 0}
 .am-new .am-account-data-actions a{white-space:normal}
 @media(max-width:1000px){.am-new .am-account-grid{grid-template-columns:1fr}.am-new .am-account-wide{grid-column:auto}}
