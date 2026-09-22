@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { CalendarDays, Video, BookOpen, MessageSquare, Clock3 } from "lucide-react";
-import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import ConvexErrorBoundary from "../_components/ConvexErrorBoundary";
 
 function displayDate(value) {
@@ -42,10 +42,6 @@ function EnglishFollowUpContent() {
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const data = useQuery("bookings:getMyFollowUp", isAuthenticated ? {} : "skip");
   const now = useSyncExternalStore(subscribeClock, getClock, getServerClock);
-  const rescheduleBooking = useMutation("bookings:rescheduleBooking");
-  const [reschedule, setReschedule] = useState(null);
-  const [status, setStatus] = useState("");
-  const [saving, setSaving] = useState(false);
 
   if (authLoading) {
     return <div className="am-english-follow" role="status">Chargement de ton suivi…</div>;
@@ -67,39 +63,6 @@ function EnglishFollowUpContent() {
   const remainingCredits = activeEntitlements.reduce((total, entitlement) => total + entitlement.remainingCredits, 0);
   const nextOfferMode = activeEntitlements[0]?.mode || upcoming?.mode || "solo";
 
-  async function submitReschedule(event) {
-    event.preventDefault();
-    if (!reschedule || saving) return;
-    setSaving(true);
-    setStatus("");
-    try {
-      const updated = await rescheduleBooking({
-        bookingId: reschedule.bookingId,
-        date: reschedule.date,
-        time: reschedule.time,
-        idempotencyKey: reschedule.idempotencyKey,
-      });
-      try {
-        await fetch("/api/booking/notification", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ notificationId: updated.notificationId, bookingId: updated.id, kind: "rescheduled" }),
-        });
-      } catch {
-        // Notification delivery never changes the reservation result.
-      }
-      setReschedule(null);
-      setStatus("Ton cours a été reporté. La règle des 24 heures a été vérifiée.");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "";
-      setStatus(message.includes("RESCHEDULE_TOO_LATE")
-        ? "Ce cours ne peut plus être reporté : il reste moins de 24 heures."
-        : "Ce nouveau créneau n’est pas disponible. Choisis-en un autre.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   return <div className="am-english-follow">
     <article className="am-follow-card" aria-labelledby="am-english-next-title">
       <div className="am-follow-card-top"><span className="am-follow-badge">Cours en visio</span><Video size={25} aria-hidden="true" /></div>
@@ -112,12 +75,9 @@ function EnglishFollowUpContent() {
       <div className="am-follow-actions">
         <Link className="am-button" href={`/nouveau/reserver?offre=anglais&format=${nextOfferMode}`}>{upcoming ? "Réserver un autre cours" : "Réserver un cours"}</Link>
         {upcoming?.meetUrl ? <a className="am-button am-follow-download" href={upcoming.meetUrl} target="_blank" rel="noreferrer">Rejoindre Google Meet</a> : <button className="am-button am-follow-download" type="button" disabled>Rejoindre Google Meet</button>}
-        {upcoming?.status === "confirmed" ? <button className="am-secondary-button" type="button" onClick={() => setReschedule({ bookingId: upcoming.id, date: upcoming.date, time: upcoming.time, idempotencyKey: crypto.randomUUID() })}>Reporter le cours</button> : null}
       </div>
-      {reschedule ? <form className="am-follow-reschedule" onSubmit={submitReschedule}><label>Nouvelle date<input type="date" value={reschedule.date} onChange={(event) => setReschedule({ ...reschedule, date: event.target.value })} required /></label><label>Nouvel horaire<input type="time" value={reschedule.time} onChange={(event) => setReschedule({ ...reschedule, time: event.target.value })} required /></label><div><button className="am-button" type="submit" disabled={saving}>{saving ? "Enregistrement…" : "Confirmer le report"}</button><button className="am-secondary-button" type="button" onClick={() => setReschedule(null)}>Annuler</button></div></form> : null}
       <div className="am-follow-credit-summary" role="status"><strong>{remainingCredits} crédit{remainingCredits > 1 ? "s" : ""} disponible{remainingCredits > 1 ? "s" : ""}</strong>{activeEntitlements.length ? <span>Valables selon la date d’expiration affichée dans ton pack.</span> : <span>Après achat d’un pack, tes heures restantes pourront être utilisées sans nouveau paiement.</span>}</div>
-      {status ? <p className="am-english-policy" role="status">{status}</p> : null}
-      <p className="am-english-policy"><em>Report possible jusqu’à 24 heures avant le cours. Passé ce délai ou en cas d’absence, la séance est décomptée, sauf exception accordée par Made.</em></p>
+      <p className="am-english-policy">Une question sur ton rendez-vous ? <Link href="/nouveau/contact">Contacte Made</Link>.</p>
     </article>
 
     <section className="am-english-pack" aria-labelledby="am-english-pack-title">
