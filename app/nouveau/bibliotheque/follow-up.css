@@ -34,6 +34,15 @@
 .am-new .am-follow-feedback-review h4{font-size:.9rem;font-weight:600;margin-bottom:12px;overflow-wrap:anywhere}
 .am-new .am-deposit-local{margin-top:12px}
 .am-new .am-english-policy{font-size:.77rem;margin-top:24px;max-width:660px}
+.am-new .am-english-upcoming{margin-top:24px;padding:24px 28px;border:1px solid #e5e3f3;border-radius:18px;background:#fff}
+.am-new .am-english-upcoming h2{font-size:1.1rem;margin-bottom:14px}
+.am-new .am-english-upcoming ol{list-style:none;padding:0;margin:0}
+.am-new .am-english-upcoming li{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;border-top:1px solid #e5e3f3}
+.am-new .am-english-upcoming li>div{display:grid;gap:4px;min-width:0}
+.am-new .am-english-upcoming strong{font-size:.88rem}
+.am-new .am-english-upcoming span,.am-new .am-english-upcoming a{font-size:.78rem}
+.am-new .am-english-upcoming a{color:var(--am-plum);text-decoration:underline;text-underline-offset:3px}
+.am-new .am-english-upcoming :is(a):focus-visible{outline:3px solid #7772b3;outline-offset:4px}
 .am-new .am-english-pack{display:flex;align-items:center;gap:28px;flex-wrap:wrap;background:var(--am-lavender);color:white;border-radius:22px;padding:28px 32px;margin:24px 0 34px}
 .am-new .am-english-pack h2{font-size:2.3rem;margin-top:8px}
 .am-new .am-english-pack .am-eyebrow{color:white}
@@ -53,6 +62,7 @@
 .am-new .am-english-resource-grid a,.am-new .am-english-resource-grid button{font:600 .8rem var(--font-poppins),sans-serif;border:0;border-radius:9px;padding:12px 16px;background:var(--am-yellow);color:white}
 .am-new .am-english-resource-grid button:disabled{opacity:var(--am-disabled-opacity);cursor:not-allowed;transform:none}
 @media(max-width:600px){.am-new .am-english-resource-grid{grid-template-columns:1fr}.am-new .am-english-pack{padding:24px 20px;gap:18px}.am-new .am-english-pack-detail{align-items:flex-start;flex-direction:column}}
+@media(max-width:600px){.am-new .am-english-upcoming{padding:18px 20px}.am-new .am-english-upcoming li{align-items:flex-start;flex-direction:column;gap:8px}}
 .am-new .am-follow-offers{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 30px}
 .am-new .am-follow-offers button{border:1px solid #e5e3f3;background:white;border-radius:24px;padding:10px 17px;font-size:.8rem}
 .am-new .am-follow-offers button[aria-pressed=true]{background:var(--am-lavender);border-color:var(--am-lavender);color:white}

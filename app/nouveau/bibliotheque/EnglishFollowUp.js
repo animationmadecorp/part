@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CalendarDays, Video, BookOpen, Clock3 } from "lucide-react";
 import { useConvexAuth, useQuery } from "convex/react";
 import ConvexErrorBoundary from "../_components/ConvexErrorBoundary";
+import { getUpcomingEnglishBookings } from "./englishFollowUpLogic.mjs";
 
 function displayDate(value) {
   if (!value) return "";
@@ -51,12 +52,8 @@ function EnglishFollowUpContent() {
     return <div className="am-english-follow" role="status">Chargement de ton suivi…</div>;
   }
 
-  const upcoming = data.bookings.find((booking) =>
-    ["pending", "confirmed"].includes(booking.status) &&
-    (booking.status !== "pending" || Number(booking.holdExpiresAt) > now) &&
-    Number.isFinite(new Date(booking.startISO).getTime()) &&
-    new Date(booking.startISO).getTime() >= now,
-  );
+  const upcomingBookings = getUpcomingEnglishBookings(data.bookings, now);
+  const upcoming = upcomingBookings[0];
   const activeEntitlements = data.entitlements.filter(
     (entitlement) => entitlement.remainingCredits > 0 && entitlement.validUntil > now,
   );
@@ -79,6 +76,16 @@ function EnglishFollowUpContent() {
       <div className="am-follow-credit-summary" role="status"><strong>{remainingCredits} crédit{remainingCredits > 1 ? "s" : ""} disponible{remainingCredits > 1 ? "s" : ""}</strong>{activeEntitlements.length ? <span>Valables selon la date d’expiration affichée dans ton pack.</span> : upcoming?.status === "confirmed" ? <span>Ton cours réservé est confirmé. Aucun crédit supplémentaire n’est disponible.</span> : <span>Après achat d’un pack, tes heures restantes pourront être utilisées sans nouveau paiement.</span>}</div>
       <p className="am-english-policy">Une question sur ton rendez-vous ? <Link href="/nouveau/contact">Contacte Made</Link>.</p>
     </article>
+
+    {upcomingBookings.length > 1 && <section className="am-english-upcoming" aria-labelledby="am-english-upcoming-title">
+      <h2 id="am-english-upcoming-title">Tes autres cours à venir</h2>
+      <ol>
+        {upcomingBookings.slice(1).map((booking) => <li key={booking.id}>
+          <div><strong>{displayDate(booking.date)} · {booking.time}</strong><span>{statusLabel(booking.status)} · {booking.mode === "duo" ? "Duo" : "Solo"}</span></div>
+          {booking.status === "confirmed" && booking.meetUrl && <a href={booking.meetUrl} target="_blank" rel="noreferrer">Rejoindre Google Meet</a>}
+        </li>)}
+      </ol>
+    </section>}
 
     <section className="am-english-pack" aria-labelledby="am-english-pack-title">
       <div><p className="am-eyebrow">TES HEURES DE COURS</p><h2 id="am-english-pack-title">Ton <em>pack.</em></h2></div>
