@@ -5,6 +5,8 @@ export const resourceMetadataItem = defineType({
   title: "Métadonnée de ressource",
   type: "object",
   fields: [
+    defineField({ name: "download", title: "ZIP public (ressource gratuite uniquement)", type: "file", options: { accept: ".zip" } }),
+    defineField({ name: "presentationSlug", title: "Slug de la fiche de présentation", type: "string" }),
     defineField({ name: "label", title: "Libellé", type: "string" }),
     defineField({ name: "value", title: "Valeur", type: "string" }),
   ],
