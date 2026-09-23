@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Check, CircleAlert, Clock3 } from "lucide-react";
 import { useConvexAuth, useQuery } from "convex/react";
 import ConvexErrorBoundary from "../_components/ConvexErrorBoundary";
+import ConfirmationProgress from "./ConfirmationProgress";
 
 const OFFER_COPY = Object.freeze({
   review: {
@@ -44,7 +45,7 @@ function priceLabel(priceCents, currency = "eur") {
 }
 
 function Loading() {
-  return <section className="am-confirmation-card" aria-live="polite"><p className="am-eyebrow">PAIEMENT</p><h1>Vérification du paiement</h1><p className="am-confirmation-lead">Nous vérifions la confirmation Stripe. Cette page se met à jour après réception du webhook signé.</p></section>;
+  return <ConfirmationProgress title="Nous retrouvons ton dossier" />;
 }
 
 function ClientRequestConfirmationContent({ requestId, cancelled }) {
@@ -71,7 +72,7 @@ function ClientRequestConfirmationContent({ requestId, cancelled }) {
   }
 
   if (request.paymentStatus !== "paid" || request.status !== "paid") {
-    return <section className="am-confirmation-card" aria-labelledby="client-request-pending-title"><div className="am-confirmation-status am-confirmation-status-neutral"><Clock3 size={24} /></div><p className="am-eyebrow">PAIEMENT EN ATTENTE</p><h1 id="client-request-pending-title">Nous vérifions ton paiement</h1><p className="am-confirmation-lead">Ton dossier sera considéré comme payé uniquement après réception du webhook Stripe signé. Cette page peut être actualisée dans quelques instants.</p><div className="am-confirmation-summary am-confirmation-summary-single"><div><span>Offre</span><strong>{copy.name}</strong></div></div></section>;
+    return <ConfirmationProgress title="Nous confirmons ton dossier" />;
   }
 
   const followUp = FOLLOW_UP_BY_OFFER[request.offerKey];

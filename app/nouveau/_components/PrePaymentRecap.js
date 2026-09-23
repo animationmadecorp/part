@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Loader2 } from "lucide-react";
 
 function displayValue(value, fallback = "Non renseigné") {
   if (Array.isArray(value)) return value.length ? value.join(", ") : fallback;
@@ -19,6 +20,8 @@ export default function PrePaymentRecap({
   paymentText,
   onPayment,
   paymentDisabled = false,
+  paymentBusyLabel = "Préparation du paiement…",
+  paymentBusyMessage = "Nous préparons ton dossier et le paiement sécurisé. Ne relance pas l’opération.",
   paymentError = "",
   headingRef,
 }) {
@@ -54,10 +57,11 @@ export default function PrePaymentRecap({
         {offer.launchPriceEnd && <p><em>Tarif de lancement valable jusqu’au {offer.launchPriceEnd}.</em></p>}
         {offer.details.map((detail) => <p key={detail}>{detail}</p>)}
         <button className="am-button" type="button" disabled={paymentDisabled} onClick={onPayment}>
-          {paymentDisabled ? "Préparation du paiement…" : paymentText}
+          {paymentDisabled ? <><Loader2 className="am-payment-spinner" size={18} aria-hidden="true" /> {paymentBusyLabel}</> : paymentText}
         </button>
+        {paymentDisabled ? <p className="am-prepayment-processing" role="status">{paymentBusyMessage}</p> : null}
         {paymentError ? <p className="am-form-error" role="alert">{paymentError}</p> : null}
-        <button className="am-secondary-button am-prepayment-edit-button" type="button" onClick={onEdit}>Modifier</button>
+        <button className="am-secondary-button am-prepayment-edit-button" type="button" disabled={paymentDisabled} onClick={onEdit}>Modifier</button>
       </aside>
     </div>
   </>;

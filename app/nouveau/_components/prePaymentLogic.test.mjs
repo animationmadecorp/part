@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFile } from "node:fs/promises";
 import { getBookingOffer } from "../_booking/bookingLogic.mjs";
 import { animationProjectOffer, feedbackOffer, reviewOffer } from "../_data/prePaymentOffers.mjs";
 import { createPrePaymentState, isNonBlank, paymentLabel, prePaymentReducer, requiredFieldMessage } from "./prePaymentLogic.mjs";
@@ -43,6 +44,11 @@ test("les boutons de packs affichent le total et non un tarif horaire", () => {
   assert.equal(paymentLabel("200 € le pack"), "Payer 200 €");
   assert.equal(paymentLabel("360 € le pack"), "Payer 360 €");
   assert.equal(paymentLabel("68 €"), "Payer 68 €");
+});
+
+test("la connexion à Stripe garde le récapitulatif visible au lieu de revenir au formulaire", async () => {
+  const calendar = await readFile(new URL("../reserver/BookingCalendar.js", import.meta.url), "utf8");
+  assert.match(calendar, /if \(submitState === "recap" \|\| submitState === "processing"\)/);
 });
 
 test("le duo précise le total pour deux et le payeur unique", () => {

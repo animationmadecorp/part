@@ -200,6 +200,7 @@ function useConfiguredCheckout({ offerKey, draftStorageKey: draftStorageKeyBase,
       return;
     }
     setIsBusy(true);
+    let redirecting = false;
     try {
       let requestId = activeRequestId;
       let draftKeyName = `animation-made:client-request:${userId}:${offerKey}:draft-key:v2`;
@@ -433,10 +434,11 @@ function useConfiguredCheckout({ offerKey, draftStorageKey: draftStorageKeyBase,
         window.localStorage.removeItem(draftKeyName);
       } catch { /* The saved Convex dossier remains available on the confirmation page. */ }
       window.location.assign(checkout.url);
+      redirecting = true;
     } catch (failure) {
       setError(readableError(failure));
     } finally {
-      setIsBusy(false);
+      if (!redirecting) setIsBusy(false);
     }
   }
 

@@ -6,6 +6,7 @@ import { CalendarDays, Check, Clock3, CircleAlert, Video } from "lucide-react";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { getBookingOffer } from "../_booking/bookingLogic.mjs";
 import ConvexErrorBoundary from "../_components/ConvexErrorBoundary";
+import ConfirmationProgress from "./ConfirmationProgress";
 
 function dateLabel(value) {
   if (!value) return "";
@@ -23,7 +24,7 @@ function dateLabel(value) {
 }
 
 function Loading() {
-  return <section className="am-confirmation-card" aria-live="polite"><p className="am-eyebrow">PAIEMENT</p><h1>Vérification du paiement</h1><p className="am-confirmation-lead">Nous vérifions la confirmation Stripe. Cette page se met à jour automatiquement.</p></section>;
+  return <ConfirmationProgress title="Nous retrouvons ta réservation" />;
 }
 
 function subscribeClock(onChange) {
@@ -62,11 +63,12 @@ function BookingConfirmationContent({ bookingId, cancelled = false }) {
     : booking.status;
   if (effectiveStatus !== "confirmed") {
     const expired = effectiveStatus === "expired" || effectiveStatus === "cancelled";
+    if (!expired) return <ConfirmationProgress title="Nous confirmons ton cours" />;
     return <section className="am-confirmation-card" aria-labelledby="booking-confirmation-title">
       <div className="am-confirmation-status am-confirmation-status-neutral"><Clock3 size={24} /></div>
-      <p className="am-eyebrow">{expired ? "CRÉNEAU LIBÉRÉ" : "PAIEMENT EN ATTENTE"}</p>
-      <h1 id="booking-confirmation-title">{expired ? "Ce créneau n’est plus maintenu" : "Nous vérifions ton paiement"}</h1>
-      <p className="am-confirmation-lead">{expired ? "Le maintien temporaire a expiré ou le paiement a été annulé. Aucun cours n’a été confirmé." : "La réservation sera confirmée uniquement après réception du webhook Stripe signé."}</p>
+      <p className="am-eyebrow">CRÉNEAU LIBÉRÉ</p>
+      <h1 id="booking-confirmation-title">Ce créneau n’est plus maintenu</h1>
+      <p className="am-confirmation-lead">Le maintien temporaire a expiré ou le paiement a été annulé. Aucun cours n’a été confirmé.</p>
       <Link className="am-button" href="/nouveau/reserver?offre=anglais&format=solo">Choisir un autre créneau</Link>
     </section>;
   }

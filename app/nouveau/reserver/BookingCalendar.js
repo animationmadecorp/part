@@ -448,7 +448,7 @@ function BookingCalendarContent({ offer }) {
     );
   }
 
-  if (submitState === "recap") {
+  if (submitState === "recap" || submitState === "processing") {
     const offerDetails = [
       "Rendez-vous en visioconférence sur Google Meet.",
       availableCredit
@@ -472,6 +472,10 @@ function BookingCalendarContent({ offer }) {
         onEdit={() => setSubmitState("idle")}
         onPayment={startPayment}
         paymentDisabled={isSubmitting}
+        paymentBusyLabel={availableCredit ? "Confirmation du cours…" : "Connexion à Stripe…"}
+        paymentBusyMessage={availableCredit
+          ? "Nous confirmons ton cours avec ton crédit. Ne relance pas l’opération."
+          : "Connexion sécurisée à Stripe en cours. Ne relance pas le paiement."}
         paymentError={submitError}
         files={null}
         summaryTitle="Ton rendez-vous"
