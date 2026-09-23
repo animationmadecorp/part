@@ -1,10 +1,13 @@
 import { defineField, defineType } from "sanity";
+import { article } from "./article";
 
 export const resourceMetadataItem = defineType({
   name: "resourceMetadataItem",
   title: "Métadonnée de ressource",
   type: "object",
   fields: [
+    { ...article.fields.find(field => field.name === "body"), title: "Présentation de la ressource", validation: undefined },
+    article.fields.find(field => field.name === "cover"),
     defineField({ name: "download", title: "ZIP public (ressource gratuite uniquement)", type: "file", options: { accept: ".zip" } }),
     defineField({ name: "presentationSlug", title: "Slug de la fiche de présentation", type: "string" }),
     defineField({ name: "label", title: "Libellé", type: "string" }),

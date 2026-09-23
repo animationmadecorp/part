@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { PortableText } from "@portabletext/react";
 import { Header, Footer } from "../../_components/Shared";
 import { getPublishedArticle } from "@/lib/sanity/articles";
@@ -23,6 +23,7 @@ const components = {
 
 export default async function ArticlePage({ params }) {
   const { slug } = await params;
+  if (slug === "am-light") permanentRedirect("/nouveau/ressources/scene-light");
   const article = await getPublishedArticle(slug);
   if (!article) notFound();
   return <><Header /><main className="am-container am-articles">

@@ -24,6 +24,7 @@ export async function POST(request) {
     revalidatePath("/nouveau");
     revalidatePath("/nouveau/faq");
     revalidatePath("/nouveau/bibliotheque");
+    revalidatePath("/nouveau/ressources/[slug]", "page");
     if (body._type === "article") {
       revalidatePath("/nouveau/articles");
       revalidatePath("/nouveau/articles/[slug]", "page");
