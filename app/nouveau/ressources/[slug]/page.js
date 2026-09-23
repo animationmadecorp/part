@@ -53,9 +53,11 @@ export default async function ResourcePage({ params }) {
   const offer = { review: "/nouveau/review", visibility: "/nouveau/visibilite", english: "/nouveau/anglais" }[resource.access] || "/nouveau#programmes";
   const { gallery, legacyBody, legacyCover } = resolveResourceMedia(resource);
   const shortPhrase = resource.summary || resource.subtitle || resource.description;
-  const recapBody = resource.recap?.length > 0 || (resource.description && shortPhrase !== resource.description);
-  const hasInstallationDetails = resource.installation?.length > 0 || resource.technicalDetails?.length > 0 || resource.license;
-  const legacyDetails = !hasInstallationDetails && legacyBody.length > 0;
+  const hasStructuredRecap = resource.recap?.length > 0;
+  const hasStructuredInstallation = resource.installation?.length > 0;
+  const recapBody = hasStructuredRecap || (resource.description && shortPhrase !== resource.description);
+  const showLegacyInInstallation = legacyBody.length > 0 && !hasStructuredRecap && !hasStructuredInstallation;
+  const showLegacyComplement = legacyBody.length > 0 && !showLegacyInInstallation && (!hasStructuredRecap || !hasStructuredInstallation);
 
   return <><Header/><main className="am-container am-articles">
     <Link href="/nouveau/bibliotheque">← Retour à la bibliothèque</Link>
@@ -76,12 +78,12 @@ export default async function ResourcePage({ params }) {
       <p className="am-eyebrow">Passer à l’action</p>
       <h2 id="resource-installation-title">Installation et détails</h2>
       <ResourceActions resource={resource} free={free} offer={offer} />
-      {resource.installation?.length > 0 ? <div className="am-resource-richtext"><PortableText value={resource.installation} components={portableTextComponents} /></div> : legacyDetails ? <div className="am-resource-richtext"><PortableText value={legacyBody} components={portableTextComponents} /></div> : null}
+      {resource.installation?.length > 0 ? <div className="am-resource-richtext"><PortableText value={resource.installation} components={portableTextComponents} /></div> : showLegacyInInstallation ? <div className="am-resource-richtext"><PortableText value={legacyBody} components={portableTextComponents} /></div> : null}
       <ResourceDetails items={resource.technicalDetails} />
       {resource.license ? <div className="am-resource-license"><h3>Licence</h3><p>{resource.license}</p></div> : null}
     </section>
 
-    {!resource.installation?.length && !legacyDetails && legacyBody.length > 0 ? <section className="am-resource-section am-resource-richtext" aria-labelledby="resource-complement-title">
+    {showLegacyComplement ? <section className="am-resource-section am-resource-richtext" aria-labelledby="resource-complement-title">
       <h2 id="resource-complement-title">Complément</h2>
       <PortableText value={legacyBody} components={portableTextComponents} />
     </section> : null}

@@ -27,8 +27,10 @@ function GalleryMedia({ item, modal = false }) {
   />;
 }
 
-function focusableButtons(dialog) {
-  return [...dialog.querySelectorAll("button:not([disabled])")];
+function focusableElements(dialog) {
+  return [...dialog.querySelectorAll(
+    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), video[controls]',
+  )];
 }
 
 export default function ResourceGallery({ items = [] }) {
@@ -37,9 +39,10 @@ export default function ResourceGallery({ items = [] }) {
   const closeButtonRef = useRef(null);
   const returnFocusRef = useRef(null);
   const dialogRef = useRef(null);
+  const isOpen = openIndex !== null;
 
   useEffect(() => {
-    if (openIndex === null) {
+    if (!isOpen) {
       const returnFocus = returnFocusRef.current;
       if (returnFocus && typeof returnFocus.focus === "function") {
         requestAnimationFrame(() => returnFocus.focus());
@@ -57,6 +60,7 @@ export default function ResourceGallery({ items = [] }) {
         setOpenIndex(null);
         return;
       }
+      if (event.target?.closest?.("video") && ["ArrowLeft", "ArrowRight"].includes(event.key)) return;
       if (event.key === "ArrowRight" && items.length > 1) {
         event.preventDefault();
         setOpenIndex((index) => (index + 1) % items.length);
@@ -68,10 +72,10 @@ export default function ResourceGallery({ items = [] }) {
         return;
       }
       if (event.key !== "Tab") return;
-      const buttons = dialogRef.current ? focusableButtons(dialogRef.current) : [];
-      if (!buttons.length) return;
-      const first = buttons[0];
-      const last = buttons[buttons.length - 1];
+      const focusable = dialogRef.current ? focusableElements(dialogRef.current) : [];
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
         last.focus();
@@ -86,7 +90,7 @@ export default function ResourceGallery({ items = [] }) {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [items.length, openIndex]);
+  }, [items.length, isOpen]);
 
   if (!Array.isArray(items) || items.length === 0) return null;
   const activeItem = openIndex === null ? null : items[openIndex];
