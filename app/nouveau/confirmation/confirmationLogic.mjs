@@ -159,7 +159,7 @@ export function createConfirmationView(record) {
             ...offer,
             nextTitle: "Ton cours d’anglais est réservé.",
             nextBody:
-              "Retrouve les informations de ton rendez-vous dans ton suivi. Tu peux reporter ton cours jusqu’à 24 heures avant le rendez-vous.",
+              "Retrouve les informations de ton rendez-vous dans ton suivi. Pour demander un report, contacte Made au moins 24 heures avant le rendez-vous.",
           }
         : offer
       : null,

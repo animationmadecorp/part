@@ -40,12 +40,8 @@ export const resourceMetadataItem = defineType({
   title: "Métadonnée de ressource",
   type: "object",
   fields: [
-    { ...article.fields.find(field => field.name === "body"), title: "Présentation de la ressource", validation: undefined },
-    article.fields.find(field => field.name === "cover"),
-    defineField({ name: "download", title: "ZIP public (ressource gratuite uniquement)", type: "file", options: { accept: ".zip" } }),
-    defineField({ name: "presentationSlug", title: "Slug de la fiche de présentation", type: "string" }),
-    defineField({ name: "label", title: "Libellé", type: "string" }),
-    defineField({ name: "value", title: "Valeur", type: "string" }),
+    defineField({ name: "label", title: "Libellé", type: "string", validation: (Rule) => Rule.required() }),
+    defineField({ name: "value", title: "Valeur", type: "string", validation: (Rule) => Rule.required() }),
   ],
   preview: { select: { title: "label", subtitle: "value" } },
 });
@@ -77,7 +73,7 @@ export const resourcePresentation = defineType({
     defineField({ name: "license", title: "Licence", type: "text", rows: 3 }),
     defineField({ ...articleBodyField, name: "body", title: "Ancien contenu complémentaire", validation: undefined }),
     defineField({ ...articleCoverField, name: "cover", title: "Couverture legacy", validation: undefined }),
-    defineField({ name: "download", title: "ZIP public (ressource gratuite uniquement)", type: "file", options: { accept: ".zip" } }),
+    defineField({ name: "download", title: "Fichier public (ressource gratuite uniquement)", type: "file", options: { accept: ".zip,.pdf" } }),
     defineField({ name: "progress", title: "Progression de démonstration", type: "number", validation: (Rule) => Rule.min(0).max(100) }),
   ],
   preview: { select: { title: "title", subtitle: "collection", status: "status" }, prepare: ({ title, subtitle, status }) => ({ title: `${status === "published" ? "●" : "○"} ${title}`, subtitle }) },

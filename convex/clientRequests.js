@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import {
   CLIENT_REQUEST_MAX_ANSWER_JSON_LENGTH,
   CLIENT_REQUEST_QUOTA_BYTES,
+  classifyChargeRefund,
   getClientRequestOffer,
   isPaymentFailureEvent,
   isPaymentSuccessEvent,
@@ -16,6 +17,7 @@ import {
 
 const REQUEST_STATUSES_EDITABLE = new Set(["draft", "awaiting_payment", "payment_failed", "expired"]);
 const UPLOAD_TTL_MS = 60 * 60 * 1000;
+const CHECKOUT_PREPARATION_TTL_MS = 5 * 60 * 1000;
 const FEEDBACK_TERMINAL_STATUSES = new Set(["paid", "refunded", "cancelled"]);
 
 function requestError(code, message) {
@@ -49,7 +51,9 @@ function assertFeedbackMutable(request) {
   if (
     request?.offerKey === "feedback" &&
     !FEEDBACK_TERMINAL_STATUSES.has(request.status) &&
-    (request.checkoutPending || request.stripeCheckoutSessionId)
+    (request.stripeCheckoutSessionId ||
+      (request.checkoutPending &&
+        (request.checkoutPreparationExpiresAt ?? ((request.updatedAt || 0) + CHECKOUT_PREPARATION_TTL_MS)) > Date.now()))
   ) {
     requestError("INVALID_STATE", "This feedback dossier is locked while Stripe checkout is open");
   }
@@ -127,6 +131,7 @@ function safeRequest(request, files = [], { includeAnswers = true } = {}) {
     ...(request.stripeCheckoutSessionId ? { checkoutSessionId: request.stripeCheckoutSessionId } : {}),
     ...(request.checkoutAttempt === undefined ? {} : { checkoutAttempt: request.checkoutAttempt }),
     ...(request.checkoutPending ? { checkoutPending: true } : {}),
+    ...(request.refundedAmountCents === undefined ? {} : { refundedAmountCents: request.refundedAmountCents }),
     ...(includeAnswers ? { answers: safeAnswers(request) } : {}),
     files: files.filter((file) => file.status === "active").map(safeFile),
   };
@@ -143,10 +148,52 @@ async function recordRequestEvent(ctx, requestId, { eventType, fromStatus, toSta
   });
 }
 
+async function applyClientRefund(ctx, request, refund, eventId, now) {
+  const kind = classifyChargeRefund(refund, request.priceCents);
+  const alreadyFull = request.status === "refunded" || request.paymentStatus === "refunded";
+  const refundedAmountCents = Math.max(request.refundedAmountCents || 0, refund.amountRefunded);
+  if (kind === "full") {
+    await ctx.db.patch(request._id, {
+      status: "refunded",
+      paymentStatus: "refunded",
+      checkoutPending: false,
+      refundedAmountCents,
+      ...(refund.paymentIntentId ? { stripePaymentIntentId: refund.paymentIntentId } : {}),
+      stripeEventId: eventId,
+      updatedAt: now,
+    });
+    if (!alreadyFull) {
+      await recordRequestEvent(ctx, request._id, {
+        eventType: "stripe_payment_refunded",
+        fromStatus: request.status,
+        toStatus: "refunded",
+        sourceId: eventId,
+      });
+    }
+    return alreadyFull ? "already_refunded" : "refunded";
+  }
+  if (alreadyFull) return "already_refunded";
+  await ctx.db.patch(request._id, {
+    refundedAmountCents,
+    ...(refund.paymentIntentId ? { stripePaymentIntentId: refund.paymentIntentId } : {}),
+    stripeEventId: eventId,
+    updatedAt: now,
+  });
+  if (refundedAmountCents > (request.refundedAmountCents || 0)) {
+    await recordRequestEvent(ctx, request._id, {
+      eventType: "stripe_payment_partially_refunded",
+      fromStatus: request.status,
+      toStatus: request.status,
+      sourceId: eventId,
+    });
+  }
+  return "partial_refund";
+}
+
 function checkoutPayload(request, current, offer) {
   return {
     requestId: request._id,
-    amountCents: offer.priceCents,
+    amountCents: request.priceCents,
     currency: "eur",
     offerKey: offer.key,
     name: offer.title,
@@ -155,6 +202,7 @@ function checkoutPayload(request, current, offer) {
     userId: current.clerkUserId,
     checkoutSessionId: request.stripeCheckoutSessionId,
     checkoutAttempt: request.checkoutAttempt || 0,
+    ...(request.checkoutPreparationAttempt === undefined ? {} : { checkoutPreparationAttempt: request.checkoutPreparationAttempt }),
   };
 }
 
@@ -510,19 +558,33 @@ export const prepareCheckout = mutationGeneric({
       const files = await getActiveFiles(ctx, request._id);
       validateClientRequestFiles(request.offerKey, answers, files);
     }
-    const nextStatus = request.status === "awaiting_payment" ? request.status : "awaiting_payment";
+    const nextStatus = "awaiting_payment";
+    const now = Date.now();
+    const feedback = request.offerKey === "feedback" && !request.stripeCheckoutSessionId;
+    if (feedback && request.checkoutPending &&
+      (request.checkoutPreparationExpiresAt ?? ((request.updatedAt || now) + CHECKOUT_PREPARATION_TTL_MS)) > now) {
+      requestError("CHECKOUT_IN_PROGRESS", "A checkout is already being prepared");
+    }
+    const checkoutPreparationAttempt = feedback
+      ? Math.max(request.checkoutAttempt || 0, request.checkoutPreparationAttempt || 0) + 1
+      : request.checkoutPreparationAttempt;
+    const preparationPatch = feedback ? {
+      checkoutPending: true,
+      checkoutPreparationAttempt,
+      checkoutPreparationExpiresAt: now + CHECKOUT_PREPARATION_TTL_MS,
+    } : {};
     if (request.status !== nextStatus) {
       await ctx.db.patch(request._id, {
         status: nextStatus,
         paymentStatus: "unpaid",
-        ...(request.offerKey === "feedback" ? { checkoutPending: true } : {}),
-        updatedAt: Date.now(),
+        ...preparationPatch,
+        updatedAt: now,
       });
       await recordRequestEvent(ctx, request._id, { eventType: "checkout_prepared", fromStatus: request.status, toStatus: nextStatus });
-    } else if (request.offerKey === "feedback" && !request.stripeCheckoutSessionId && !request.checkoutPending) {
-      await ctx.db.patch(request._id, { checkoutPending: true, updatedAt: Date.now() });
+    } else if (feedback) {
+      await ctx.db.patch(request._id, { ...preparationPatch, updatedAt: now });
     }
-    return checkoutPayload({ ...request, status: nextStatus, checkoutPending: request.offerKey === "feedback" ? true : request.checkoutPending }, current, offer);
+    return checkoutPayload({ ...request, status: nextStatus, ...preparationPatch }, current, offer);
   },
 });
 
@@ -548,6 +610,11 @@ export const attachCheckoutSession = mutationGeneric({
     if (!new RegExp(`^${expectedPrefix}[A-Za-z0-9]+$`).test(checkoutSessionId)) requestError("INVALID_INPUT", "Invalid checkout session");
     if (!Number.isSafeInteger(args.attempt) || args.attempt < 1) requestError("INVALID_INPUT", "Invalid checkout attempt");
     if (!REQUEST_STATUSES_EDITABLE.has(request.status)) requestError("INVALID_STATE", "Checkout cannot be attached to this request");
+    if (request.offerKey === "feedback" && !request.stripeCheckoutSessionId && request.checkoutPreparationAttempt !== undefined &&
+      (!request.checkoutPending || args.attempt !== request.checkoutPreparationAttempt ||
+        (request.checkoutPreparationExpiresAt || 0) <= Date.now())) {
+      requestError("IDEMPOTENCY_MISMATCH", "Checkout preparation is no longer active");
+    }
     if (request.stripeCheckoutSessionId && request.stripeCheckoutSessionId !== checkoutSessionId) {
       if (args.attempt <= (request.checkoutAttempt || 0)) {
         requestError("IDEMPOTENCY_MISMATCH", "A different checkout session is already attached");
@@ -578,7 +645,7 @@ export const releaseCheckout = mutationGeneric({
     if (request.offerKey !== "feedback" || request.stripeCheckoutSessionId || request.status !== "awaiting_payment") {
       return { ok: true, released: false };
     }
-    if (request.checkoutAttempt && args.attempt !== request.checkoutAttempt + 1) {
+    if (!request.checkoutPending || args.attempt !== (request.checkoutPreparationAttempt ?? ((request.checkoutAttempt || 0) + 1))) {
       requestError("IDEMPOTENCY_MISMATCH", "Checkout attempt does not match the pending attempt");
     }
     await ctx.db.patch(request._id, { checkoutPending: false, updatedAt: Date.now() });
@@ -635,6 +702,8 @@ export const confirmFromStripe = mutationGeneric({
     paymentIntentId: v.optional(v.string()),
     paymentStatus: v.optional(v.string()),
     amountTotal: v.optional(v.number()),
+    amountRefunded: v.optional(v.number()),
+    refunded: v.optional(v.boolean()),
     currency: v.optional(v.string()),
     metadataUserId: v.optional(v.string()),
     metadataOfferKey: v.optional(v.string()),
@@ -647,7 +716,7 @@ export const confirmFromStripe = mutationGeneric({
       .query("clientStripeEvents")
       .withIndex("by_event_id", (query) => query.eq("eventId", args.eventId))
       .first();
-    if (previousEvent && previousEvent.status !== "pending_refund") {
+    if (previousEvent && !["pending_refund", "pending_refund_partial", "refund_reconciliation_required"].includes(previousEvent.status)) {
       const previousRequest = previousEvent.requestId ? await ctx.db.get(previousEvent.requestId) : null;
       return {
         ok: true,
@@ -659,29 +728,36 @@ export const confirmFromStripe = mutationGeneric({
       };
     }
 
+    const refundKind = args.eventType === "charge.refunded"
+      ? classifyChargeRefund(args)
+      : null;
     let request = args.requestId ? await ctx.db.get(args.requestId) : null;
     if (!request && args.checkoutSessionId) request = await findRequestByField(ctx, "by_checkout_session", args.checkoutSessionId);
     if (!request && args.paymentIntentId) request = await findRequestByField(ctx, "by_payment_intent", args.paymentIntentId);
+    if (!request && previousEvent?.requestId) request = await ctx.db.get(previousEvent.requestId);
     const now = Date.now();
     if (!request) {
-      if (previousEvent?.status === "pending_refund") {
+      if (["pending_refund", "pending_refund_partial"].includes(previousEvent?.status)) {
         await ctx.db.patch(previousEvent._id, { processedAt: now });
-        return { ok: true, duplicate: false, status: "pending_refund", eventId: previousEvent.eventId };
+        return { ok: true, duplicate: false, status: previousEvent.status, eventId: previousEvent.eventId };
       }
+      const pendingStatus = refundKind === "full" ? "pending_refund" : "pending_refund_partial";
       await ctx.db.insert("clientStripeEvents", {
         eventId: args.eventId,
         eventType: args.eventType,
-        status: args.eventType === "charge.refunded" && args.paymentIntentId ? "pending_refund" : "ignored_no_request",
+        status: refundKind && args.paymentIntentId ? pendingStatus : "ignored_no_request",
         ...(args.checkoutSessionId ? { checkoutSessionId: args.checkoutSessionId } : {}),
         ...(args.paymentIntentId ? { paymentIntentId: args.paymentIntentId } : {}),
         ...(args.amountTotal === undefined ? {} : { amountTotal: args.amountTotal }),
+        ...(args.amountRefunded === undefined ? {} : { amountRefunded: args.amountRefunded }),
+        ...(args.refunded === undefined ? {} : { refunded: args.refunded }),
         ...(args.currency ? { currency: args.currency } : {}),
         processedAt: now,
       });
       return {
         ok: true,
         duplicate: false,
-        status: args.eventType === "charge.refunded" && args.paymentIntentId ? "pending_refund" : "ignored_no_request",
+        status: refundKind && args.paymentIntentId ? pendingStatus : "ignored_no_request",
       };
     }
 
@@ -689,36 +765,30 @@ export const confirmFromStripe = mutationGeneric({
     if (!offer) requestError("INVALID_OFFER", "This client request offer is not available");
     if (args.metadataUserId && args.metadataUserId !== request.clerkUserId) requestError("PAYMENT_MISMATCH", "Payment account does not match the request");
     if (args.metadataOfferKey && args.metadataOfferKey !== request.offerKey) requestError("PAYMENT_MISMATCH", "Payment offer does not match the request");
+    if (refundKind && request.stripePaymentIntentId && args.paymentIntentId !== request.stripePaymentIntentId) {
+      requestError("PAYMENT_MISMATCH", "Refund does not belong to this payment");
+    }
     if (args.checkoutAttempt !== undefined && (!Number.isSafeInteger(args.checkoutAttempt) || args.checkoutAttempt < 1)) requestError("PAYMENT_MISMATCH", "Payment attempt is invalid");
-    if (previousEvent?.status === "pending_refund") {
-      const alreadyRefunded = request.status === "refunded" || request.paymentStatus === "refunded";
+    if (refundKind) classifyChargeRefund(args, request.priceCents);
+    if (["pending_refund", "pending_refund_partial"].includes(previousEvent?.status)) {
+      const refund = {
+        amountTotal: previousEvent.amountTotal ?? args.amountTotal,
+        amountRefunded: previousEvent.amountRefunded ?? args.amountRefunded,
+        refunded: previousEvent.refunded ?? args.refunded,
+        paymentIntentId: previousEvent.paymentIntentId,
+      };
+      const status = await applyClientRefund(ctx, request, refund, previousEvent.eventId, now);
       await ctx.db.patch(previousEvent._id, {
-        status: "refunded",
+        status,
         requestId: request._id,
         processedAt: now,
       });
-      await ctx.db.patch(request._id, {
-        status: "refunded",
-        paymentStatus: "refunded",
-        checkoutPending: false,
-        ...(args.paymentIntentId ? { stripePaymentIntentId: args.paymentIntentId } : {}),
-        stripeEventId: previousEvent.eventId,
-        updatedAt: now,
-      });
-      if (!alreadyRefunded) {
-        await recordRequestEvent(ctx, request._id, {
-          eventType: "stripe_payment_refunded",
-          fromStatus: request.status,
-          toStatus: "refunded",
-          sourceId: previousEvent.eventId,
-        });
-      }
       const refundedRequest = await ctx.db.get(request._id);
       return {
         ok: true,
         duplicate: false,
         eventId: previousEvent.eventId,
-        status: alreadyRefunded ? "already_refunded" : "refunded",
+        status,
         requestId: request._id,
         request: safeRequest(refundedRequest, await getActiveFiles(ctx, request._id), { includeAnswers: false }),
       };
@@ -727,29 +797,29 @@ export const confirmFromStripe = mutationGeneric({
       ? await ctx.db
         .query("clientStripeEvents")
         .withIndex("by_payment_intent", (query) => query.eq("paymentIntentId", args.paymentIntentId))
-        .filter((query) => query.eq(query.field("status"), "pending_refund"))
-        .first()
+        .filter((query) => query.or(
+          query.eq(query.field("status"), "pending_refund"),
+          query.eq(query.field("status"), "pending_refund_partial"),
+        ))
+        .collect()
       : null;
-    if (pendingRefund) {
-      await ctx.db.patch(pendingRefund._id, { status: "refunded", requestId: request._id, processedAt: now });
-      const alreadyRefunded = request.status === "refunded" || request.paymentStatus === "refunded";
-      await ctx.db.patch(request._id, {
-        status: "refunded",
-        paymentStatus: "refunded",
-        checkoutPending: false,
-        ...(args.paymentIntentId ? { stripePaymentIntentId: args.paymentIntentId } : {}),
-        stripeEventId: pendingRefund.eventId,
-        updatedAt: now,
-      });
-      if (!alreadyRefunded) {
-        await recordRequestEvent(ctx, request._id, {
-          eventType: "stripe_payment_refunded",
-          fromStatus: request.status,
-          toStatus: "refunded",
-          sourceId: pendingRefund.eventId,
-        });
+    const unresolvedLegacyRefund = pendingRefund?.some((pending) =>
+      pending.amountTotal === undefined || pending.amountRefunded === undefined || pending.refunded === undefined,
+    ) || false;
+    if (pendingRefund?.length) {
+      for (const pending of pendingRefund.sort((left, right) => (left.amountRefunded || 0) - (right.amountRefunded || 0))) {
+        // Old pending events did not retain the charge's cumulative refund.
+        // Leave them for signed webhook replay rather than guessing a full refund.
+        if (pending.amountTotal === undefined || pending.amountRefunded === undefined || pending.refunded === undefined) continue;
+        const status = await applyClientRefund(ctx, request, {
+          amountTotal: pending.amountTotal,
+          amountRefunded: pending.amountRefunded,
+          refunded: pending.refunded,
+          paymentIntentId: pending.paymentIntentId,
+        }, pending.eventId, now);
+        await ctx.db.patch(pending._id, { status, requestId: request._id, processedAt: now });
+        request = await ctx.db.get(request._id);
       }
-      request = await ctx.db.get(request._id);
     }
     const staleCheckoutAttempt = Boolean(
       args.checkoutSessionId &&
@@ -806,7 +876,7 @@ export const confirmFromStripe = mutationGeneric({
     if (staleCheckoutAttempt) {
       requestError("PAYMENT_MISMATCH", "Checkout session does not match the active attempt");
     }
-    if (args.amountTotal !== undefined && args.amountTotal !== offer.priceCents) requestError("PAYMENT_MISMATCH", "Payment amount does not match the offer");
+    if (args.amountTotal !== undefined && args.amountTotal !== request.priceCents) requestError("PAYMENT_MISMATCH", "Payment amount does not match the order");
     if (args.currency !== undefined && args.currency.toLowerCase() !== "eur") requestError("PAYMENT_MISMATCH", "Payment currency does not match the offer");
 
     let status = "ignored_event";
@@ -815,28 +885,20 @@ export const confirmFromStripe = mutationGeneric({
     const isFailed = isPaymentFailureEvent(args.eventType);
     const isRefunded = args.eventType === "charge.refunded";
     if (isRefunded) {
-      status = request.paymentStatus === "refunded" || request.status === "refunded"
-        ? "already_refunded"
-        : "refunded";
-      await ctx.db.patch(request._id, {
-        status: "refunded",
-        paymentStatus: "refunded",
-        checkoutPending: false,
-        ...(args.paymentIntentId ? { stripePaymentIntentId: args.paymentIntentId } : {}),
-        stripeEventId: args.eventId,
-        updatedAt: now,
-      });
-      if (status === "refunded") {
-        await recordRequestEvent(ctx, request._id, {
-          eventType: "stripe_payment_refunded",
-          fromStatus: request.status,
-          toStatus: "refunded",
-          sourceId: args.eventId,
-        });
-      }
+      status = await applyClientRefund(ctx, request, args, args.eventId, now);
       updatedRequest = await ctx.db.get(request._id);
     } else if (isPaid && args.paymentStatus !== "unpaid") {
-      if (request.paymentStatus === "paid" || request.status === "paid") {
+      if (unresolvedLegacyRefund) {
+        // Do not grant access or send a paid notification while an old refund
+        // cannot be classified from stored data. Reconcile against Stripe.
+        status = "refund_reconciliation_required";
+        await ctx.db.patch(request._id, {
+          ...(args.checkoutSessionId ? { stripeCheckoutSessionId: args.checkoutSessionId } : {}),
+          ...(args.paymentIntentId ? { stripePaymentIntentId: args.paymentIntentId } : {}),
+          stripeEventId: args.eventId,
+          updatedAt: now,
+        });
+      } else if (request.paymentStatus === "paid" || request.status === "paid") {
         status = "already_paid";
         await ctx.db.patch(request._id, {
           ...(args.checkoutSessionId ? { stripeCheckoutSessionId: args.checkoutSessionId } : {}),
@@ -882,10 +944,12 @@ export const confirmFromStripe = mutationGeneric({
       updatedRequest = await ctx.db.get(request._id);
     } else if (isFailed && request.paymentStatus !== "paid" && !["refunded", "cancelled"].includes(request.status)) {
       status = "payment_failed";
+      const checkoutTerminal = args.eventType === "checkout.session.async_payment_failed";
         await ctx.db.patch(request._id, {
           status: "payment_failed",
           paymentStatus: "failed",
-          checkoutPending: request.checkoutPending === true,
+          checkoutPending: checkoutTerminal ? false : request.checkoutPending === true,
+          ...(checkoutTerminal && request.offerKey === "feedback" ? { stripeCheckoutSessionId: undefined } : {}),
         ...(args.paymentIntentId ? { stripePaymentIntentId: args.paymentIntentId } : {}),
         stripeEventId: args.eventId,
         updatedAt: now,
@@ -902,7 +966,8 @@ export const confirmFromStripe = mutationGeneric({
       await ctx.db.patch(request._id, {
         status: "expired",
         paymentStatus: "expired",
-        checkoutPending: request.checkoutPending === true,
+        checkoutPending: false,
+        ...(request.offerKey === "feedback" ? { stripeCheckoutSessionId: undefined } : {}),
         stripeEventId: args.eventId,
         updatedAt: now,
       });
@@ -915,7 +980,7 @@ export const confirmFromStripe = mutationGeneric({
       updatedRequest = await ctx.db.get(request._id);
     }
 
-    await ctx.db.insert("clientStripeEvents", {
+    const recordedEvent = {
       eventId: args.eventId,
       eventType: args.eventType,
       status,
@@ -923,9 +988,16 @@ export const confirmFromStripe = mutationGeneric({
       ...(args.checkoutSessionId ? { checkoutSessionId: args.checkoutSessionId } : {}),
       ...(args.paymentIntentId ? { paymentIntentId: args.paymentIntentId } : {}),
       ...(args.amountTotal === undefined ? {} : { amountTotal: args.amountTotal }),
+      ...(args.amountRefunded === undefined ? {} : { amountRefunded: args.amountRefunded }),
+      ...(args.refunded === undefined ? {} : { refunded: args.refunded }),
       ...(args.currency ? { currency: args.currency } : {}),
       processedAt: now,
-    });
+    };
+    if (previousEvent?.status === "refund_reconciliation_required") {
+      await ctx.db.patch(previousEvent._id, recordedEvent);
+    } else {
+      await ctx.db.insert("clientStripeEvents", recordedEvent);
+    }
     return {
       ok: true,
       duplicate: false,

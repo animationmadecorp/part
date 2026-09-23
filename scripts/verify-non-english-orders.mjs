@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   CLIENT_REQUEST_OFFERS,
   CLIENT_REQUEST_QUOTA_BYTES,
+  classifyChargeRefund,
   getClientRequestOffer,
   isRequestOwner,
   normalizeAttachment,
@@ -29,6 +30,15 @@ test("les prix UI correspondent au catalogue serveur des quatre offres commandab
   assert.equal(feedbackOffer.price, 38);
   assert.equal(getClientRequestOffer("feedback")?.priceCents, 3800);
   assert.equal(getClientRequestOffer("__proto__"), null, "l’offre ne doit pas être contournable par une clé de prototype");
+});
+
+test("un remboursement partiel conserve le droit, seul le cumul intégral le révoque", () => {
+  assert.equal(classifyChargeRefund({ amountTotal: 3800, amountRefunded: 500, refunded: false }, 3800), "partial");
+  assert.equal(classifyChargeRefund({ amountTotal: 3800, amountRefunded: 3800, refunded: true }, 3800), "full");
+  assert.throws(() => classifyChargeRefund({ amountTotal: 3800, amountRefunded: 500, refunded: true }, 3800), /PAYMENT_MISMATCH/);
+  assert.throws(() => classifyChargeRefund({ amountTotal: 3800, amountRefunded: 3900, refunded: false }, 3800), /PAYMENT_MISMATCH/);
+  assert.throws(() => classifyChargeRefund({ amountTotal: 3800, amountRefunded: 500, refunded: false }, 2800), /PAYMENT_MISMATCH/);
+  assert.throws(() => classifyChargeRefund({ amountTotal: 3800, amountRefunded: 500 }, 3800), /PAYMENT_MISMATCH/);
 });
 
 test("les réponses sont normalisées côté Convex avant sauvegarde", () => {

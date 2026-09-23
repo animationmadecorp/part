@@ -23,6 +23,23 @@ export async function generateMetadata() {
 export default async function Anglais() {
   const page = await getEditorialPage("/nouveau/anglais");
   const hero = page?.hero || {};
+  const sections = page?.sections?.map((section) => {
+    if (section.stableId === "section:english-practice") {
+      return {
+        ...section,
+        items: section.items.map((item) => item.stableId === "english:practice-lessons"
+          ? { ...item, body: "Dès ton premier cours acheté, tu accèdes aux leçons complémentaires de Made pour pratiquer entre les séances." }
+          : item),
+      };
+    }
+    if (section.stableId === "section:english-reschedule") {
+      return {
+        ...section,
+        body: "Pour demander un report, contacte-moi au moins 24 heures avant le rendez-vous. À moins de 24 heures ou en cas d’absence, la séance est décomptée, sauf exception que je t’accorde.",
+      };
+    }
+    return section;
+  });
   return <><Header/><main className="am-container am-product am-review-page">
     <Link className="am-back" href="/nouveau#programmes"><ArrowLeft size={16}/> Tous les programmes</Link>
     <div className="am-product-grid">
@@ -31,7 +48,7 @@ export default async function Anglais() {
         <EditorialHeading hero={hero}/>
         <p className="am-lead">{hero.lead}</p>
 
-        <EditorialSections sections={page?.sections}/>
+        <EditorialSections sections={sections}/>
       </div>
 
       <aside className="am-booking-stack">
@@ -52,7 +69,7 @@ export default async function Anglais() {
           <p><strong>50 € par cours · 20 € économisés</strong></p>
           <p><em>4 heures à utiliser dans les 3 mois suivant l’achat.</em></p>
           <p><em>Par rapport à quatre cours à l’unité à 55 €.</em></p>
-          <p>Leçons complémentaires et GPT d’entraînement inclus.</p>
+          <p>Leçons complémentaires incluses dès ton premier cours.</p>
           <Link className="am-button" href="/nouveau/reserver?offre=anglais&format=solo-4h">Réserver mes 4 heures</Link>
         </div>
         <div className="am-booking am-project-booking">
@@ -63,7 +80,7 @@ export default async function Anglais() {
           <p><strong>45 € par cours · 80 € économisés</strong></p>
           <p><em>8 heures à utiliser dans les 6 mois suivant l’achat.</em></p>
           <p><em>Par rapport à huit cours à l’unité à 55 €.</em></p>
-          <p>Leçons complémentaires et GPT d’entraînement inclus.</p>
+          <p>Leçons complémentaires incluses dès ton premier cours.</p>
           <Link className="am-button" href="/nouveau/reserver?offre=anglais&format=solo-8h">Réserver mes 8 heures</Link>
         </div>
         <div className="am-booking am-project-booking">

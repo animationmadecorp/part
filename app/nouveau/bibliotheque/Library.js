@@ -62,14 +62,14 @@ function LibraryContent({ initialFollowUp = null, initialRequestId = null, initi
       accessState: resolveResourceAccess(resource, { status: requestStatus, requests }),
     }));
   const sections = [
-    ["Ton accompagnement", "Les ressources incluses dans ton accompagnement.", visible.filter(item => item.resource.access !== "free" && item.accessState.unlocked)],
+    ["Liées à ton accompagnement", "Découvre les fiches liées à ton achat. Leur contenu sera ajouté ici dès sa mise à disposition.", visible.filter(item => item.resource.access !== "free" && item.accessState.unlocked)],
     ["Les petits cadeaux", "À garder sous la main, quel que soit ton point de départ.", visible.filter(item => item.resource.access === "free")],
     ["Ressources supplémentaires", "Découvre les accompagnements qui donnent accès à ces contenus.", visible.filter(item => item.resource.access !== "free" && !item.accessState.unlocked)],
   ];
 
   return <>
     <div className="am-library-shell">
-      <aside className="am-sidebar"><Brand/><p className="am-eyebrow">TON ESPACE, À TON RYTHME</p><nav aria-label="Espace personnel">{tabs.map(([name, Icon]) => <button key={name} aria-current={tab === name ? "page" : undefined} onClick={() => { setTab(name); }}><Icon size={20}/>{name}</button>)}{isAdmin && <Link className="am-sidebar-admin-link" href="/admin"><ShieldCheck size={20} aria-hidden="true"/>Administration</Link>}</nav><div className="am-sidebar-bottom"><p className="am-handnote">Un petit pas compte aussi.</p><Link href="/nouveau"><ArrowLeft size={16}/> Revenir au site</Link><div className="am-user"><span>M</span><div>Mon espace<small>Compte gratuit</small></div></div></div></aside>
+      <aside className="am-sidebar"><Brand/><p className="am-eyebrow">TON ESPACE, À TON RYTHME</p><nav aria-label="Espace personnel">{tabs.map(([name, Icon]) => <button key={name} aria-current={tab === name ? "page" : undefined} onClick={() => { setTab(name); }}><Icon size={20}/>{name}</button>)}{isAdmin && <Link className="am-sidebar-admin-link" href="/admin"><ShieldCheck size={20} aria-hidden="true"/>Administration</Link>}</nav><div className="am-sidebar-bottom"><p className="am-handnote">Un petit pas compte aussi.</p><Link href="/nouveau"><ArrowLeft size={16}/> Revenir au site</Link><div className="am-user"><span>M</span><div>Mon espace<small>Compte personnel</small></div></div></div></aside>
       <main className="am-library-main"><div className="am-library-top"><span>Mon espace / {tab}</span></div>
           {tab === "Ma bibliothèque" ? <><div className="am-library-title"><p className="am-eyebrow">DE QUOI FAIRE GRANDIR TES IDÉES</p><h1>Ma <em>bibliothèque.</em></h1><p>Des ressources gratuites pour commencer à avancer, puis les contenus liés à tes accompagnements.</p></div><div className="am-library-banner"><SparkleMark/><div><strong>Un petit cadeau pour ton prochain projet.</strong><p>Des add-ons Blender et des conseils pratiques, pour commencer à avancer ensemble.</p></div><span className="am-tag">RESSOURCES GRATUITES</span></div>{requestStatus === "error" && <p className="am-notice" role="status">Les ressources gratuites restent disponibles. Vérifie ta connexion pour afficher tes accès achetés.</p>}<div className="am-library-controls"><div className="am-filters" aria-label="Collections">{["Tout", "Portfolio", "Animation", "Anglais", "Contenu"].map(item => <button key={item} aria-pressed={filter === item} onClick={() => setFilter(item)}>{item}</button>)}</div><label className="am-search"><Search size={17}/><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Chercher une ressource" aria-label="Chercher une ressource"/></label></div>
           {!visible.length && !["Tout", "Anglais"].includes(filter) && <p className="am-empty" role="status">Aucune ressource pour cette recherche. Essaie un autre mot.</p>}
@@ -83,7 +83,9 @@ function LibraryContent({ initialFollowUp = null, initialRequestId = null, initi
 }
 
 function ResourceCard({ resource }) {
-  const accessLabel = resource.accessRule === "free" ? "Offert" : resource.accessRule === "purchase" ? "Payant" : "Inclus dans une offre";
+  const accessLabel = resource.accessRule === "free"
+    ? resource.downloadUrl ? "Offert" : "Bientôt disponible"
+    : resource.accessRule === "purchase" ? "Payant · contenu à venir" : "Lié à une offre · contenu à venir";
   return <Link className="am-resource" href={`/nouveau/ressources/${encodeURIComponent(resource.id)}`} style={{ display: "block", color: "inherit", textDecoration: "none" }}>
     <div className={`am-resource-cover am-${resource.color}`}><span className="am-cover-format">{resource.format}</span><strong>{resource.symbol}</strong><p>{resource.subtitle}</p></div>
     <div className="am-resource-body"><span className="am-resource-meta">{resource.collection} · {resource.format}</span><h3>{resource.title}</h3><span className="am-status">{accessLabel}</span><span className="am-resource-action">Découvrir <BookOpen size={16}/></span></div>

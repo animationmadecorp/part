@@ -78,6 +78,14 @@ assert.equal(disabledResend.enabled, false);
 assert.equal(canSendResendTo("client@example.com", disabledResendEnv), false, "Resend stays disabled by default");
 assert.equal(canSendResendTo("client@example.com", { ...disabledResendEnv, RESEND_SEND_ENABLED: "true" }), true, "Resend allows only its explicit test recipient");
 assert.equal(canSendResendTo("other@example.com", { ...disabledResendEnv, RESEND_SEND_ENABLED: "true" }), false, "Resend recipient allow-list is enforced");
+const productionResendEnv = {
+  ...disabledResendEnv,
+  RESEND_SEND_ENABLED: "true",
+  RESEND_SEND_MODE: "production",
+  RESEND_APP_URL: "https://animation-made.com",
+};
+assert.equal(canSendResendTo("other@example.com", productionResendEnv), false, "production recipients require a second opt-in");
+assert.equal(canSendResendTo("other@example.com", { ...productionResendEnv, RESEND_PRODUCTION_SEND_ENABLED: "true" }), true, "production mode can reach real clients once explicitly enabled");
 
 const enabledResendEnv = {
   RESEND_API_KEY: "re_test",
@@ -207,6 +215,8 @@ assert.match(bookings, /claimStripeRefund/);
 assert.match(bookings, /deliverBookingNotification/);
 assert.match(bookings, /internalActionGeneric/);
 assert.match(bookings, /REMINDER_LEAD_MS/);
+assert.match(bookings, /getResendConfig\(\)/, "Convex reminders share the explicit Resend send mode");
+assert.doesNotMatch(bookings, /process\.env\.NODE_ENV/, "Convex runtime NODE_ENV must not decide who receives email");
 assert.match(bookings, /status: "not_due"/);
 assert.match(bookings, /rescheduleRevision/);
 assert.match(bookings, /findRescheduleOperation/);
@@ -224,8 +234,8 @@ assert.match(webhookRoute, /parseVerifiedStripeEvent/);
 assert.match(webhookRoute, /confirmFromStripe/);
 assert.match(webhookRoute, /claimStripeRefund/);
 assert.match(followUp, /getMyFollowUp/);
-assert.match(followUp, /rescheduleBooking/);
-assert.match(followUp, /idempotencyKey/);
+assert.doesNotMatch(followUp, /rescheduleBooking/, "le client demande un report par contact, sans bouton autonome");
+assert.match(followUp, /\/nouveau\/contact/);
 assert.match(followUp, /let clockSnapshot = Date\.now\(\)/, "follow-up clock snapshot is cached for useSyncExternalStore");
 assert.match(followUp, /const getClock = \(\) => clockSnapshot/, "follow-up clock reads the cached snapshot");
 assert.match(availabilityPage, /requireAdminPage/);

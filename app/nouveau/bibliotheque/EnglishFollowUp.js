@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
-import { CalendarDays, Video, BookOpen, MessageSquare, Clock3 } from "lucide-react";
+import { CalendarDays, Video, BookOpen, Clock3 } from "lucide-react";
 import { useConvexAuth, useQuery } from "convex/react";
 import ConvexErrorBoundary from "../_components/ConvexErrorBoundary";
 
@@ -70,13 +70,13 @@ function EnglishFollowUpContent() {
       <p className="am-follow-description">Retrouve ton rendez-vous et rejoins Made sur Google Meet.</p>
       <div className="am-follow-resource">
         <span className="am-follow-icon"><CalendarDays size={28} aria-hidden="true" /></span>
-        <div>{upcoming ? <><h3>{displayDate(upcoming.date)} · {upcoming.time}</h3><p>{statusLabel(upcoming.status)} · Europe/Paris</p><small>En duo, vous rejoignez le même lien Meet, ensemble ou chacun depuis votre ordinateur.</small></> : <><h3>Aucun cours réservé</h3><p>Choisis un créneau d’une heure qui te convient.</p><small>Après confirmation du paiement, ton rendez-vous apparaîtra ici.</small></>}</div>
+        <div>{upcoming ? <><h3>{displayDate(upcoming.date)} · {upcoming.time}</h3><p>{statusLabel(upcoming.status)} · Europe/Paris</p>{upcoming.mode === "duo" && <small>En duo, vous rejoignez le même lien Meet, ensemble ou chacun depuis votre ordinateur.</small>}</> : <><h3>Aucun cours réservé</h3><p>Choisis un créneau d’une heure qui te convient.</p><small>Après confirmation du paiement, ton rendez-vous apparaîtra ici.</small></>}</div>
       </div>
       <div className="am-follow-actions">
         <Link className="am-button" href={`/nouveau/reserver?offre=anglais&format=${nextOfferMode}`}>{upcoming ? "Réserver un autre cours" : "Réserver un cours"}</Link>
-        {upcoming?.meetUrl ? <a className="am-button am-follow-download" href={upcoming.meetUrl} target="_blank" rel="noreferrer">Rejoindre Google Meet</a> : <button className="am-button am-follow-download" type="button" disabled>Rejoindre Google Meet</button>}
+        {upcoming?.meetUrl ? <a className="am-button am-follow-download" href={upcoming.meetUrl} target="_blank" rel="noreferrer">Rejoindre Google Meet</a> : upcoming ? <span role="status">Le lien Google Meet apparaîtra ici avant le cours.</span> : null}
       </div>
-      <div className="am-follow-credit-summary" role="status"><strong>{remainingCredits} crédit{remainingCredits > 1 ? "s" : ""} disponible{remainingCredits > 1 ? "s" : ""}</strong>{activeEntitlements.length ? <span>Valables selon la date d’expiration affichée dans ton pack.</span> : <span>Après achat d’un pack, tes heures restantes pourront être utilisées sans nouveau paiement.</span>}</div>
+      <div className="am-follow-credit-summary" role="status"><strong>{remainingCredits} crédit{remainingCredits > 1 ? "s" : ""} disponible{remainingCredits > 1 ? "s" : ""}</strong>{activeEntitlements.length ? <span>Valables selon la date d’expiration affichée dans ton pack.</span> : upcoming?.status === "confirmed" ? <span>Ton cours réservé est confirmé. Aucun crédit supplémentaire n’est disponible.</span> : <span>Après achat d’un pack, tes heures restantes pourront être utilisées sans nouveau paiement.</span>}</div>
       <p className="am-english-policy">Une question sur ton rendez-vous ? <Link href="/nouveau/contact">Contacte Made</Link>.</p>
     </article>
 
@@ -88,10 +88,9 @@ function EnglishFollowUpContent() {
 
     <section className="am-english-practice" aria-labelledby="am-english-practice-title">
       <h2 id="am-english-practice-title">Entre deux <em>cours.</em></h2>
-      <p>Inclus dès ton premier cours acheté, à l’unité ou en pack.</p>
+      <p>Les leçons de Made sont incluses dès ton premier cours acheté, à l’unité ou en pack.</p>
       <div className="am-english-resource-grid">
         <article><BookOpen size={27} aria-hidden="true" /><h3>Tes leçons</h3><p>Retrouve les leçons de Made pour reprendre les explications et continuer à pratiquer.</p><Link href="/nouveau/bibliotheque">Ouvrir ma bibliothèque</Link></article>
-        <article><MessageSquare size={27} aria-hidden="true" /><h3>Ton GPT d’entraînement</h3><p>Un GPT basé sur les leçons de Made pour t’entraîner sur ChatGPT entre les séances.</p><button type="button" disabled>Pratiquer sur ChatGPT</button></article>
       </div>
     </section>
   </div>;

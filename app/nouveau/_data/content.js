@@ -259,7 +259,7 @@ const initialPageSections = {
       heading: "Entre les cours,",
       emphasis: "continue à pratiquer.",
       items: [
-        { stableId: "english:practice-lessons", body: "Dès ton premier cours acheté, tu accèdes aux leçons complémentaires et à un GPT d’entraînement basé sur mes leçons, inclus dans l’offre, pour pratiquer sur ChatGPT entre les séances." },
+        { stableId: "english:practice-lessons", body: "Dès ton premier cours acheté, tu accèdes aux leçons complémentaires de Made pour pratiquer entre les séances." },
         { stableId: "english:practice-access", body: "Ces ressources sont incluses à l’unité comme en pack, en individuel comme en duo." },
       ],
     },
@@ -268,7 +268,7 @@ const initialPageSections = {
       style: "prose",
       heading: "Un changement",
       emphasis: "de programme ?",
-      body: "Tu peux reporter ton cours jusqu’à 24 heures avant le rendez-vous. À moins de 24 heures ou en cas d’absence, la séance est décomptée, sauf exception que je t’accorde.",
+      body: "Pour demander un report, contacte-moi au moins 24 heures avant le rendez-vous. À moins de 24 heures ou en cas d’absence, la séance est décomptée, sauf exception que je t’accorde.",
     },
   ],
 };

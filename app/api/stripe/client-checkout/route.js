@@ -13,7 +13,7 @@ function errorStatus(error) {
   const message = error instanceof Error ? error.message : "";
   if (message.startsWith("UNAUTHENTICATED:")) return 401;
   if (message.startsWith("FORBIDDEN:")) return 403;
-  if (["ALREADY_PAID:", "INVALID_STATE:", "IDEMPOTENCY_MISMATCH:"].some((code) => message.startsWith(code))) return 409;
+  if (["ALREADY_PAID:", "INVALID_STATE:", "IDEMPOTENCY_MISMATCH:", "CHECKOUT_IN_PROGRESS:"].some((code) => message.startsWith(code))) return 409;
   if (["INVALID_INPUT:", "INVALID_OFFER:", "PAYMENT_MISMATCH:"].some((code) => message.startsWith(code))) return 400;
   return Number.isInteger(error?.status) ? error.status : 502;
 }
@@ -63,6 +63,19 @@ function matchesCreatedContract(session, proof, stripeMode) {
     metadata.contractVersion === proof?.contractVersion;
 }
 
+async function releaseUnattachedFeedbackCheckout(convex, payload, serverSecret) {
+  if (payload?.offerKey !== "feedback" || payload.checkoutSessionId) return;
+  try {
+    await convex.client.mutation(anyApi.clientRequests.releaseCheckout, {
+      requestId: payload.requestId,
+      attempt: Number(payload.checkoutPreparationAttempt ?? (Number(payload.checkoutAttempt || 0) + 1)),
+      serverSecret,
+    });
+  } catch {
+    // Keep the original checkout error; a subsequent retry can reconcile the dossier.
+  }
+}
+
 export async function POST(request) {
   const session = await getClerkSession();
   if (!session.authenticated) {
@@ -107,6 +120,7 @@ export async function POST(request) {
       ...(payload.checkoutSessionId ? { currentCheckoutSessionId: payload.checkoutSessionId } : {}),
     });
   } catch (error) {
+    await releaseUnattachedFeedbackCheckout(convex, payload, serverSecret);
     return Response.json({ error: "checkout_contract_unavailable" }, { status: errorStatus(error) });
   }
 
@@ -157,8 +171,11 @@ export async function POST(request) {
     }
   }
 
-  const attempt = Number(payload.checkoutAttempt || 0) + 1;
+  const attempt = Number(payload.checkoutSessionId
+    ? Number(payload.checkoutAttempt || 0) + 1
+    : (payload.checkoutPreparationAttempt ?? (Number(payload.checkoutAttempt || 0) + 1)));
   if (!Number.isSafeInteger(attempt) || attempt < 1) {
+    await releaseUnattachedFeedbackCheckout(convex, payload, serverSecret);
     return Response.json({ error: "invalid_checkout_attempt", retryable: false }, { status: 500 });
   }
   let checkout;
@@ -180,6 +197,9 @@ export async function POST(request) {
       idempotencyKey: `client-request:${payload.requestId}:${attempt}:contract:${contractProof.id}`,
     });
   } catch (error) {
+    if (error?.retryable !== true) {
+      await releaseUnattachedFeedbackCheckout(convex, payload, serverSecret);
+    }
     return Response.json(
       {
         error: error instanceof Error ? error.message : "stripe_unavailable",

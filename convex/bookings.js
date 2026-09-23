@@ -18,6 +18,7 @@ import {
 } from "./bookingRules";
 import { notificationIdempotencyKey } from "./notificationKeys";
 import { renderBookingEmail, safeAppOrigin } from "./notificationTemplates";
+import { getResendConfig } from "../lib/resend-server.mjs";
 
 const EFFECT_RETRY_AFTER_MS = 60 * 1000;
 const NOTIFICATION_RETRY_AFTER_MS = 5 * 60 * 1000;
@@ -374,6 +375,7 @@ async function grantAndConsumeCredit(ctx, { booking, offer, identity, checkoutSe
       offerKey: offer.key,
       mode: offer.mode,
       totalCredits: offer.sessionCount,
+      priceCents: booking.priceCents ?? offer.priceCents,
       remainingCredits: offer.sessionCount,
       validUntil: addValidityMonths(now, offer.validityMonths),
       stripeCheckoutSessionId: entitlementKey,
@@ -534,6 +536,16 @@ async function claimNotificationRecord(
   expectedScheduleRevision,
 ) {
   if (notification.kind === "reminder") {
+    if (booking.status !== "confirmed" || booking.paymentStatus !== "paid") {
+      if (!["sent", "skipped"].includes(notification.status)) {
+        await ctx.db.patch(notification._id, {
+          status: "skipped",
+          lastError: "booking_no_longer_confirmed",
+          updatedAt: now,
+        });
+      }
+      return { claimed: false, status: "booking_no_longer_confirmed" };
+    }
     const bookingRevision = booking.rescheduleRevision || 0;
     const notificationRevision = notification.scheduleRevision || 0;
     if (
@@ -713,6 +725,7 @@ export const createHold = mutationGeneric({
       endAt: startAt + offer.durationMinutes * 60 * 1000,
       durationMinutes: offer.durationMinutes,
       timezone: BOOKING_TIMEZONE,
+      priceCents: offer.priceCents,
       status: "pending",
       paymentStatus: entitlement ? "paid" : "unpaid",
       holdExpiresAt: now + HOLD_DURATION_MINUTES * 60 * 1000,
@@ -786,7 +799,7 @@ export const getCheckoutPayload = queryGeneric({
     if (!offer) bookingError("INVALID_OFFER", "Unknown booking offer");
     return {
       bookingId: booking._id,
-      amountCents: offer.priceCents,
+      amountCents: booking.priceCents ?? offer.priceCents,
       currency: "eur",
       offerKey: offer.key,
       mode: offer.mode,
@@ -900,7 +913,7 @@ export const confirmFromStripe = mutationGeneric({
 
     const offer = getBookingOffer(booking.offerKey, booking.mode);
     if (!offer) bookingError("INVALID_OFFER", "Unknown booking offer");
-    if (args.amountTotal !== undefined && args.amountTotal !== offer.priceCents) {
+    if (args.amountTotal !== undefined && args.amountTotal !== (booking.priceCents ?? offer.priceCents)) {
       bookingError("PAYMENT_MISMATCH", "Payment amount does not match the offer");
     }
     if (args.currency !== undefined && args.currency !== "eur") {
@@ -935,7 +948,7 @@ export const confirmFromStripe = mutationGeneric({
                 refundedAmountCents: Math.max(
                   priorRefund.amountRefunded || 0,
                   priorRefund.amountTotal || 0,
-                  offer.priceCents,
+                  booking.priceCents ?? offer.priceCents,
                 ),
               }
             : {}),
@@ -994,7 +1007,7 @@ export const confirmFromStripe = mutationGeneric({
           status = "confirmed";
           if (priorPartialRefund) {
             const partialRefundedAmountCents = Math.min(
-              offer.priceCents,
+              booking.priceCents ?? offer.priceCents,
               Math.max(priorRefund.amountRefunded || 0, booking.refundedAmountCents || 0),
             );
             await ctx.db.patch(booking._id, {
@@ -1294,9 +1307,14 @@ export const applyStripeRefund = mutationGeneric({
         now,
       });
     }
+    // For a legacy pack without a frozen price, the signed Stripe charge is
+    // authoritative. A later credit booking may carry a different catalog price.
+    const paidPriceCents = entitlement?.priceCents ??
+      (entitlement ? args.amountTotal : undefined) ??
+      booking?.priceCents ?? args.amountTotal ?? offer.priceCents;
     if (
       args.amountTotal !== undefined &&
-      (!Number.isSafeInteger(args.amountTotal) || args.amountTotal !== offer.priceCents)
+      (!Number.isSafeInteger(args.amountTotal) || args.amountTotal <= 0 || args.amountTotal !== paidPriceCents)
     ) {
       return recordRefundRejection(ctx, {
         eventId: args.eventId,
@@ -1311,7 +1329,7 @@ export const applyStripeRefund = mutationGeneric({
     if (
       args.amountRefunded !== undefined &&
       (!Number.isSafeInteger(args.amountRefunded) || args.amountRefunded < 0 ||
-        args.amountRefunded > (args.amountTotal === undefined ? offer.priceCents : args.amountTotal))
+        args.amountRefunded > paidPriceCents)
     ) {
       return recordRefundRejection(ctx, {
         eventId: args.eventId,
@@ -1355,7 +1373,7 @@ export const applyStripeRefund = mutationGeneric({
         };
       }
       const nextRefundedAmountCents = Math.min(
-        offer.priceCents,
+        paidPriceCents,
         Math.max(
           entitlement?.refundedAmountCents || 0,
           booking?.refundedAmountCents || 0,
@@ -1437,7 +1455,7 @@ export const applyStripeRefund = mutationGeneric({
             priorRefund?.amountRefunded || 0,
             args.amountRefunded || 0,
             args.amountTotal || 0,
-            offer.priceCents,
+            paidPriceCents,
           ),
           updatedAt: now,
         });
@@ -1459,7 +1477,7 @@ export const applyStripeRefund = mutationGeneric({
             priorRefund?.amountRefunded || 0,
             args.amountRefunded || 0,
             args.amountTotal || 0,
-            offer.priceCents,
+            paidPriceCents,
           ),
           ...(affectedBooking._id === booking?._id && !affectedBooking.stripePaymentIntentId
             ? { stripePaymentIntentId: args.paymentIntentId }
@@ -1756,24 +1774,6 @@ export const completeBookingNotification = mutationGeneric({
   },
 });
 
-function getResendDeliveryConfig() {
-  const recipients = (process.env.RESEND_TEST_RECIPIENTS || "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-  const production = process.env.NODE_ENV === "production";
-  const productionEnabled = process.env.RESEND_PRODUCTION_SEND_ENABLED === "true";
-  return {
-    apiKey: process.env.RESEND_API_KEY?.trim() || null,
-    from: process.env.RESEND_FROM_EMAIL?.trim() || null,
-    replyTo: process.env.RESEND_REPLY_TO_EMAIL?.trim() || "animationmadecorp@gmail.com",
-    appUrl: process.env.RESEND_APP_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim() || null,
-    recipients,
-    production,
-    enabled: process.env.RESEND_SEND_ENABLED === "true" && (!production || productionEnabled),
-  };
-}
-
 export const getNotificationForDelivery = internalQueryGeneric({
   args: { notificationId: v.id("bookingNotifications") },
   handler: async (ctx, args) => {
@@ -1865,7 +1865,7 @@ export const deliverBookingNotification = internalActionGeneric({
         return { sent: false, reason: "reminder_rescheduled", dueAt };
       }
     }
-    const config = getResendDeliveryConfig();
+    const config = getResendConfig();
     const recipient = record.deliveryBooking?.email?.trim().toLowerCase();
     const appOrigin = safeAppOrigin(config.appUrl, { production: config.production });
     const retryArgs = {
@@ -1886,7 +1886,21 @@ export const deliverBookingNotification = internalActionGeneric({
 
     const claim = await ctx.runMutation(internal.bookings.claimBookingNotificationInternal, retryArgs);
     if (!claim.claimed) return claim;
-    if (!recipient || !config.recipients.includes(recipient)) {
+    if (record.notification.kind === "reminder") {
+      const latest = await ctx.runQuery(internal.bookings.getNotificationForDelivery, {
+        notificationId: args.notificationId,
+      });
+      if (!latest || latest.booking.status !== "confirmed" || latest.booking.paymentStatus !== "paid" ||
+          (latest.booking.rescheduleRevision || 0) !== (record.notification.scheduleRevision || 0)) {
+        await ctx.runMutation(internal.bookings.completeBookingNotificationInternal, {
+          notificationId: args.notificationId,
+          status: "skipped",
+          error: "booking_no_longer_confirmed",
+        });
+        return { sent: false, reason: "booking_no_longer_confirmed" };
+      }
+    }
+    if (!recipient || (config.allowlistRequired && !config.recipients.includes(recipient))) {
       await ctx.runMutation(internal.bookings.completeBookingNotificationInternal, {
         notificationId: args.notificationId,
         status: "skipped",

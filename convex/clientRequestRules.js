@@ -284,3 +284,15 @@ export function isPaymentFailureEvent(eventType) {
     "payment_intent.payment_failed",
   ].includes(eventType);
 }
+
+export function classifyChargeRefund({ amountTotal, amountRefunded, refunded }, expectedAmount) {
+  if (!Number.isSafeInteger(amountTotal) || amountTotal <= 0 ||
+      !Number.isSafeInteger(amountRefunded) || amountRefunded <= 0 || amountRefunded > amountTotal ||
+      typeof refunded !== "boolean" ||
+      (expectedAmount !== undefined && amountTotal !== expectedAmount)) {
+    throw new Error("PAYMENT_MISMATCH: Invalid refunded charge amount");
+  }
+  const full = amountRefunded === amountTotal;
+  if (refunded !== full) throw new Error("PAYMENT_MISMATCH: Conflicting refunded charge state");
+  return full ? "full" : "partial";
+}

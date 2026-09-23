@@ -43,7 +43,7 @@ export default async function Visibilite() {
           <p><FileText size={19}/>Une fiche personnalisée à conserver</p>
           <p><em>Livraison sous 10 jours maximum après réception de ton questionnaire complet et des pièces jointes. Si un imprévu décale ce délai, tu es prévenu·e.</em></p>
           <ul className="am-review-choices"><li>Fil rouge, valeurs et forces.</li><li>Point de vue, public et idées de contenus.</li><li>Pistes pour vivre de ton art.</li></ul>
-          <Link className="am-button" href="/nouveau/visibilite/questionnaire">Réserver ma fiche personnalisée</Link>
+          <Link className="am-button" href="/nouveau/visibilite/questionnaire">Commencer mon questionnaire</Link>
         </div>
       </aside>
     </div>

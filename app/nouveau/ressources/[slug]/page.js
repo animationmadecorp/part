@@ -11,6 +11,18 @@ import "../../articles/articles.css";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  const editorial = await getPublicEditorialContent();
+  const resource = editorial.resources.find((item) => item.id === slug);
+  if (!resource) return { title: "Ressource — Animation Made" };
+  return {
+    title: `${resource.title} — Animation Made`,
+    description: resource.summary || resource.subtitle || resource.description,
+    alternates: { canonical: `/nouveau/ressources/${encodeURIComponent(resource.id)}` },
+  };
+}
+
 const portableTextComponents = {
   marks: {
     link: ({ value, children }) => {
@@ -28,9 +40,10 @@ const portableTextComponents = {
 
 function ResourceActions({ resource, free, offer }) {
   return <div className="am-article-error-actions">
-    {free && resource.downloadUrl ? <a className="am-button" href={resource.downloadUrl} download>Télécharger gratuitement le ZIP</a> : free ? <p role="status">Ressource en préparation.</p> : <>
+    {free && resource.downloadUrl ? <a className="am-button" href={resource.downloadUrl} download>{resource.downloadUrl.endsWith(".pdf") ? "Télécharger gratuitement le PDF" : "Télécharger gratuitement le ZIP"}</a> : free ? <p role="status">Cette ressource sera bientôt disponible.</p> : <>
+      <p>Cette page présente la ressource. Son contenu n’est pas encore disponible ici.</p>
       <Link className="am-button" href={offer}>Découvrir l’offre</Link>
-      <Link href="/nouveau/bibliotheque?onglet=suivi">Déjà acheté ? Mon suivi</Link>
+      <Link href="/nouveau/bibliotheque?onglet=suivi">Consulter mes commandes et livraisons</Link>
     </>}
   </div>;
 }
@@ -76,7 +89,7 @@ export default async function ResourcePage({ params }) {
 
     <section className="am-resource-section am-resource-installation" aria-labelledby="resource-installation-title">
       <p className="am-eyebrow">Passer à l’action</p>
-      <h2 id="resource-installation-title">Installation et détails</h2>
+      <h2 id="resource-installation-title">{resource.format === "Add-on" ? "Installation et détails" : "Accès et détails"}</h2>
       <ResourceActions resource={resource} free={free} offer={offer} />
       {resource.installation?.length > 0 ? <div className="am-resource-richtext"><PortableText value={resource.installation} components={portableTextComponents} /></div> : showLegacyInInstallation ? <div className="am-resource-richtext"><PortableText value={legacyBody} components={portableTextComponents} /></div> : null}
       <ResourceDetails items={resource.technicalDetails} />
