@@ -23,7 +23,7 @@ function GalleryMedia({ item, modal = false }) {
     alt={modal ? item.alt : ""}
     width={1200}
     height={800}
-    sizes={modal ? "(max-width: 760px) 90vw, 820px" : "(max-width: 760px) 72vw, 260px"}
+    sizes={modal ? "(max-width: 760px) 90vw, 820px" : "(max-width: 760px) 50vw, (max-width: 1100px) 60vw, 620px"}
   />;
 }
 
@@ -114,16 +114,16 @@ export default function ResourceGallery({ items = [] }) {
       <h2 id="am-resource-gallery-title">Aperçus</h2>
       <span>{items.length} {items.length === 1 ? "visuel" : "visuels"}</span>
     </div>
-    <div className="am-resource-gallery-strip" role="list" aria-label="Aperçus de la ressource">
+    <div className="am-resource-gallery-mosaic" role="list" aria-label="Aperçus de la ressource">
       {items.map((item, index) => <div role="listitem" key={`${item.assetRef || item.url}-${index}`}>
         <button
           type="button"
-          className="am-resource-gallery-trigger"
+          className={`am-resource-gallery-trigger${item.type === "video" ? " am-resource-gallery-trigger-video" : ""}`}
           onClick={(event) => open(index, event)}
           aria-label={`${item.type === "video" ? "Lire" : "Agrandir"} : ${item.alt}`}
         >
           <span className="am-resource-gallery-thumb"><GalleryMedia item={item}/></span>
-          <span className="am-resource-gallery-trigger-label">{item.type === "video" ? "Vidéo" : "Agrandir"}</span>
+          {item.type === "video" ? <span className="am-resource-gallery-play" aria-hidden="true">▶</span> : null}
         </button>
       </div>)}
     </div>
