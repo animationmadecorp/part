@@ -87,3 +87,30 @@ export const getMyPurchaseHistory = queryGeneric({
     };
   },
 });
+
+// Resolve a paid order to its Checkout Session on the server. Session IDs and
+// Stripe invoice URLs never enter the public purchase-history query.
+export const getMyInvoiceCheckout = queryGeneric({
+  args: {
+    sessionUserId: v.string(),
+    requestId: v.optional(v.id("clientRequests")),
+    entitlementId: v.optional(v.id("entitlements")),
+  },
+  handler: async (ctx, args) => {
+    const current = await requireIdentity(ctx, args.sessionUserId);
+    if (Boolean(args.requestId) === Boolean(args.entitlementId)) accountError("INVALID_INPUT", "One purchase is required");
+    if (args.requestId) {
+      const request = await ctx.db.get(args.requestId);
+      if (!request || request.clerkUserId !== current.clerkUserId || request.tokenIdentifier !== current.tokenIdentifier) {
+        accountError("FORBIDDEN", "Purchase is unavailable");
+      }
+      if (!["paid", "refunded"].includes(request.paymentStatus) || !request.stripeCheckoutSessionId) return null;
+      return { checkoutSessionId: request.stripeCheckoutSessionId };
+    }
+    const entitlement = await ctx.db.get(args.entitlementId);
+    if (!entitlement || entitlement.clerkUserId !== current.clerkUserId || entitlement.tokenIdentifier !== current.tokenIdentifier) {
+      accountError("FORBIDDEN", "Purchase is unavailable");
+    }
+    return { checkoutSessionId: entitlement.stripeCheckoutSessionId };
+  },
+});

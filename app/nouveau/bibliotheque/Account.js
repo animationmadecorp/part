@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useConvexAuth, useConvexConnectionState, useQuery_experimental } from "convex/react";
@@ -116,10 +117,26 @@ export default function Account({ isAdmin = false }) {
 }
 
 function PurchaseRow({ purchase }) {
+  const [invoice, setInvoice] = useState(null);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
   const dateLabel = formatHistoryDate(purchase.date);
   const dateValue = purchase.date ? new Date(purchase.date) : null;
   const dateTime = dateValue && Number.isFinite(dateValue.getTime()) ? dateValue.toISOString() : undefined;
   const actionHref = purchase.href || (purchase.source === "booking-entitlement" ? englishFollowUpHref : null);
   const actionLabel = purchase.source === "booking-entitlement" ? "Ouvrir mon suivi" : purchase.statusKey === "paid" ? "Ouvrir mon dossier" : "Voir mon dossier";
-  return <li className="am-account-purchase"><div className="am-account-purchase-top"><div><h3>{purchase.title}</h3><p>{purchase.detail}</p></div><div className="am-account-purchase-status"><strong>{purchase.status}</strong>{purchase.amount && <span>{purchase.amount}</span>}{dateLabel && <time dateTime={dateTime}>{dateLabel}</time>}</div></div>{actionHref && <Link className="am-account-purchase-link" href={actionHref}>{actionLabel} <ArrowRight size={14} aria-hidden="true"/></Link>}</li>;
+  const canShowInvoice = ["paid", "refunded", "partial_refund"].includes(purchase.statusKey);
+  async function loadInvoice() {
+    setInvoiceLoading(true);
+    try {
+      const [kind, id] = purchase.id.split(":", 2);
+      const response = await fetch(`/api/stripe/my-invoice?kind=${kind === "request" ? "request" : "entitlement"}&id=${encodeURIComponent(id)}`, { cache: "no-store" });
+      if (!response.ok) throw new Error("invoice_unavailable");
+      setInvoice(await response.json());
+    } catch {
+      setInvoice({ status: "error" });
+    } finally {
+      setInvoiceLoading(false);
+    }
+  }
+  return <li className="am-account-purchase"><div className="am-account-purchase-top"><div><h3>{purchase.title}</h3><p>{purchase.detail}</p></div><div className="am-account-purchase-status"><strong>{purchase.status}</strong>{purchase.amount && <span>{purchase.amount}</span>}{dateLabel && <time dateTime={dateTime}>{dateLabel}</time>}</div></div>{actionHref && <Link className="am-account-purchase-link" href={actionHref}>{actionLabel} <ArrowRight size={14} aria-hidden="true"/></Link>}{canShowInvoice && <div className="am-account-invoice"><button type="button" className="am-account-purchase-link" onClick={loadInvoice} disabled={invoiceLoading}>{invoiceLoading ? "Recherche de la facture…" : invoice?.status === "ready" ? "Actualiser les documents" : "Voir ma facture"}</button>{invoice?.status === "ready" && <span><a href={invoice.url} target="_blank" rel="noopener noreferrer">Facture {invoice.number || ""}</a>{invoice.pdf && <> · <a href={invoice.pdf} target="_blank" rel="noopener noreferrer">PDF</a></>}{invoice.creditNotes?.map((note, index) => <span key={`${note.number || "avoir"}-${index}`}> · <a href={note.pdf} target="_blank" rel="noopener noreferrer">Avoir {note.number || ""}</a></span>)}</span>}{invoice?.status === "pending" && <span role="status">La facture est en préparation. Réessaie dans quelques instants.</span>}{invoice?.status === "unavailable" && <span role="status">Aucune facture automatique pour cet achat. Tu peux demander un justificatif ci-dessous.</span>}{invoice?.status === "error" && <span role="alert">Impossible de charger la facture. Réessaie.</span>}</div>}</li>;
 }

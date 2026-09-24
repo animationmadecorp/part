@@ -37,6 +37,11 @@
 .am-new .am-account-purchase-status span,.am-new .am-account-purchase-status time{font-size:.74rem;color:#68657b}
 .am-new .am-account-purchase-link{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-size:.78rem;font-weight:600;color:#37345f}
 .am-new .am-account-purchase-link:hover{text-decoration:underline}
+.am-new button.am-account-purchase-link{padding:0;border:0;background:none;cursor:pointer;font:inherit;font-size:.78rem;font-weight:600}
+.am-new button.am-account-purchase-link:disabled{opacity:.65;cursor:wait}
+.am-new .am-account-invoice{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px}
+.am-new .am-account-invoice>span{font-size:.78rem;color:#68657b}
+.am-new .am-account-invoice a{color:#37345f;text-decoration:underline;text-underline-offset:2px}
 .am-new .am-account-note{padding:18px;border-radius:10px;background:#f6f5fc;margin-top:22px}
 .am-new .am-account-note p{margin-top:8px}
 .am-new .am-account-note a{font-weight:600;color:#37345f}

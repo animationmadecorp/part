@@ -21,7 +21,8 @@
     "verify:review-submissions": "node scripts/verify-review-submissions.mjs",
     "verify:delivery-notifications": "node scripts/verify-delivery-notifications.mjs",
     "verify:client-request-emails": "node scripts/verify-client-request-emails.mjs",
-    "verify:stripe-contract": "node scripts/verify-stripe-contract.mjs"
+    "verify:stripe-contract": "node scripts/verify-stripe-contract.mjs",
+    "verify:stripe-invoices": "node scripts/verify-stripe-invoices.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.4",

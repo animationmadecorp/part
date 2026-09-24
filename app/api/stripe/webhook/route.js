@@ -6,6 +6,7 @@ import {
   getStripeConfig,
   parseVerifiedStripeEvent,
   refundStripePaymentIntent,
+  syncCreditNotesForRefundedCharge,
 } from "@/lib/stripe-server.mjs";
 import {
   clientRequestNotificationKey,
@@ -176,6 +177,13 @@ export async function POST(request) {
       bookingRefund.kind === "rejected" ||
       (bookingRefund.kind === "unmatched" && englishRefundMarker)
     ) {
+      if (bookingRefund.kind === "booking") {
+        try {
+          await syncCreditNotesForRefundedCharge({ chargeId: object.id, paymentIntentId });
+        } catch {
+          return Response.json({ error: "invoice_credit_note_retry" }, { status: 502 });
+        }
+      }
       return Response.json(
         {
           received: true,
@@ -285,6 +293,13 @@ export async function POST(request) {
             // The durable event remains claimable for the next signed retry.
           }
         }
+      }
+    }
+    if (event.type === "charge.refunded" && ["refunded", "partial_refund", "already_refunded"].includes(clientResult.status)) {
+      try {
+        await syncCreditNotesForRefundedCharge({ chargeId: object.id, paymentIntentId });
+      } catch {
+        return Response.json({ error: "invoice_credit_note_retry" }, { status: 502 });
       }
     }
     return Response.json(
