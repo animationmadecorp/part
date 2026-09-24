@@ -257,7 +257,7 @@ assert.match(schema, /clientStripeEvents[\s\S]*by_payment_intent/);
 assert.match(schema, /checkoutPending/);
 assert.match(rules, /CLIENT_REQUEST_OFFERS/);
 assert.match(rules, /CLIENT_REQUEST_QUOTA_BYTES/);
-assert.match(rules, /priceCents: 3800/);
+assert.match(rules, /defaultPrice\(requestPriceKey\("feedback"\)\)/);
 assert.match(rules, /feedback: 3/);
 assert.match(rules, /Feedback requires between 1 and 3 plans/);
 assert.match(rules, /validateClientRequestFiles/);

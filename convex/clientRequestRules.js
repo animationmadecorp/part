@@ -1,35 +1,36 @@
 // Shared, framework-free invariants for the paid questionnaire dossiers.
 // The browser may display a matching label, but only this catalog is allowed
 // to decide the amount that reaches Stripe.
+import { defaultPrice, formatPriceLabel, requestPriceKey } from "../lib/pricing-core.mjs";
 
 export const CLIENT_REQUEST_OFFERS = Object.freeze({
   review: Object.freeze({
     key: "review",
     title: "Ta review personnalisée",
     description: "Guide PDF personnalisé · Sans visio",
-    priceCents: 2800,
-    priceLabel: "28 €",
+    priceCents: defaultPrice(requestPriceKey("review")).priceCents,
+    priceLabel: formatPriceLabel(defaultPrice(requestPriceKey("review")).priceCents, requestPriceKey("review")),
   }),
   contenu: Object.freeze({
     key: "contenu",
     title: "Ta direction de contenu",
     description: "Fiche personnalisée · Sans visio",
-    priceCents: 5800,
-    priceLabel: "58 €",
+    priceCents: defaultPrice(requestPriceKey("contenu")).priceCents,
+    priceLabel: formatPriceLabel(defaultPrice(requestPriceKey("contenu")).priceCents, requestPriceKey("contenu")),
   }),
   "projet-animation": Object.freeze({
     key: "projet-animation",
     title: "Ton projet d’animation",
     description: "Un plan · 15 secondes maximum · Sans visio",
-    priceCents: 8800,
-    priceLabel: "88 €",
+    priceCents: defaultPrice(requestPriceKey("projet-animation")).priceCents,
+    priceLabel: formatPriceLabel(defaultPrice(requestPriceKey("projet-animation")).priceCents, requestPriceKey("projet-animation")),
   }),
   feedback: Object.freeze({
     key: "feedback",
     title: "Ton feedback d’animation",
     description: "Jusqu’à 3 plans · 15 secondes cumulées · Sans visio",
-    priceCents: 3800,
-    priceLabel: "38 €",
+    priceCents: defaultPrice(requestPriceKey("feedback")).priceCents,
+    priceLabel: formatPriceLabel(defaultPrice(requestPriceKey("feedback")).priceCents, requestPriceKey("feedback")),
   }),
 });
 

@@ -14,6 +14,8 @@ import {
   serializeClientRequestAnswers,
   validateClientRequestFiles,
 } from "./clientRequestRules";
+import { assertCompatiblePriceVersion, requestPriceKey } from "../lib/pricing-core.mjs";
+import { getCurrentPrice } from "./pricing";
 
 const REQUEST_STATUSES_EDITABLE = new Set(["draft", "awaiting_payment", "payment_failed", "expired"]);
 const UPLOAD_TTL_MS = 60 * 60 * 1000;
@@ -124,6 +126,7 @@ function safeRequest(request, files = [], { includeAnswers = true } = {}) {
     status: request.status,
     paymentStatus: request.paymentStatus,
     priceCents: request.priceCents,
+    ...(request.priceVersion === undefined ? {} : { priceVersion: request.priceVersion }),
     currency: request.currency,
     createdAt: request.createdAt,
     updatedAt: request.updatedAt,
@@ -210,6 +213,7 @@ export const createDraft = mutationGeneric({
   args: {
     draftKey: v.string(),
     offerKey: v.string(),
+    priceVersion: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const current = await requireIdentity(ctx);
@@ -230,6 +234,10 @@ export const createDraft = mutationGeneric({
       return safeRequest(previous, await getActiveFiles(ctx, previous._id));
     }
 
+    const price = assertCompatiblePriceVersion(
+      await getCurrentPrice(ctx, requestPriceKey(offer.key)), args.priceVersion,
+    );
+
     const now = Date.now();
     const requestId = await ctx.db.insert("clientRequests", {
       clerkUserId: current.clerkUserId,
@@ -240,7 +248,8 @@ export const createDraft = mutationGeneric({
       status: "draft",
       paymentStatus: "unpaid",
       answersJson: "{}",
-      priceCents: offer.priceCents,
+      priceCents: price.priceCents,
+      priceVersion: price.version,
       currency: "eur",
       checkoutAttempt: 0,
       createdAt: now,

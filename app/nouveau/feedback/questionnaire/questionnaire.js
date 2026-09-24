@@ -97,6 +97,7 @@ export default function FeedbackQuestionnaire({ requestId = null }) {
     localDraftKey,
     serverRequest,
     serverLoading,
+    displayPrice,
     storedFiles,
     removeStoredFile,
     requestId: activeRequestId,
@@ -215,10 +216,12 @@ export default function FeedbackQuestionnaire({ requestId = null }) {
     </div>
     {visibleStep === "recap" && <PrePaymentRecap
       headingRef={recapHeading}
-      offer={feedbackOffer}
-      paymentText={paymentLabel(feedbackOffer.priceLabel)}
+      offer={{ ...feedbackOffer, priceLabel: displayPrice?.priceLabel || "Tarif indisponible", launchPriceEnd: displayPrice?.version === 1 ? feedbackOffer.launchPriceEnd : null }}
+      paymentText={displayPrice ? paymentLabel(displayPrice.priceLabel) : "Tarif indisponible"}
       onPayment={pay}
-      paymentDisabled={paymentBusy}
+      paymentDisabled={paymentBusy || !displayPrice}
+      paymentBusyLabel={displayPrice ? undefined : "Tarif indisponible"}
+      paymentBusyMessage={displayPrice ? undefined : "Recharge la page pour connaître le montant avant de payer."}
       paymentError={paymentError || error}
       onEdit={() => dispatch({ type: "edit" })}
       files={[...storedFiles, ...localFiles]}

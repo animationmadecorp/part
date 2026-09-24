@@ -1,5 +1,6 @@
 // Server-side booking rules. Keep this module framework-free so every Convex
 // mutation applies the same commercial and calendar invariants as the UI.
+import { bookingPriceKey, defaultPrice, formatPriceLabel } from "../lib/pricing-core.mjs";
 
 export const BOOKING_TIMEZONE = "Europe/Paris";
 export const MINIMUM_NOTICE_MINUTES = 24 * 60;
@@ -31,8 +32,8 @@ export const BOOKING_OFFERS = Object.freeze({
         mode: "solo",
         modeLabel: "Cours particulier",
         durationMinutes: 60,
-        priceCents: 5500,
-        priceLabel: "55 €",
+        priceCents: defaultPrice(bookingPriceKey("anglais", "solo")).priceCents,
+        priceLabel: formatPriceLabel(defaultPrice(bookingPriceKey("anglais", "solo")).priceCents, bookingPriceKey("anglais", "solo")),
         sessionCount: 1,
         validityMonths: 1,
       }),
@@ -40,8 +41,8 @@ export const BOOKING_OFFERS = Object.freeze({
         mode: "solo-4h",
         modeLabel: "Pack individuel · 4 cours d’une heure",
         durationMinutes: 60,
-        priceCents: 20000,
-        priceLabel: "200 € le pack",
+        priceCents: defaultPrice(bookingPriceKey("anglais", "solo-4h")).priceCents,
+        priceLabel: formatPriceLabel(defaultPrice(bookingPriceKey("anglais", "solo-4h")).priceCents, bookingPriceKey("anglais", "solo-4h")),
         sessionCount: 4,
         validityMonths: 3,
       }),
@@ -49,8 +50,8 @@ export const BOOKING_OFFERS = Object.freeze({
         mode: "solo-8h",
         modeLabel: "Pack individuel · 8 cours d’une heure",
         durationMinutes: 60,
-        priceCents: 36000,
-        priceLabel: "360 € le pack",
+        priceCents: defaultPrice(bookingPriceKey("anglais", "solo-8h")).priceCents,
+        priceLabel: formatPriceLabel(defaultPrice(bookingPriceKey("anglais", "solo-8h")).priceCents, bookingPriceKey("anglais", "solo-8h")),
         sessionCount: 8,
         validityMonths: 6,
       }),
@@ -58,8 +59,8 @@ export const BOOKING_OFFERS = Object.freeze({
         mode: "duo",
         modeLabel: "Cours en duo",
         durationMinutes: 60,
-        priceCents: 6800,
-        priceLabel: "68 €",
+        priceCents: defaultPrice(bookingPriceKey("anglais", "duo")).priceCents,
+        priceLabel: formatPriceLabel(defaultPrice(bookingPriceKey("anglais", "duo")).priceCents, bookingPriceKey("anglais", "duo")),
         sessionCount: 1,
         validityMonths: 1,
       }),

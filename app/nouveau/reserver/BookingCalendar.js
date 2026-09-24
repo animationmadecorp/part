@@ -1,20 +1,9 @@
 "use client";
 
-import { Component, useEffect, useMemo, useRef, useState } from "react";
+import { Component, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
-import {
-  AlertCircle,
-  CalendarDays,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Clock3,
-  Globe2,
-  Loader2,
-  Mail,
-  UserRound,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, Mail, UserRound } from "lucide-react";
 import {
   BOOKING_TIMEZONE,
   DEFAULT_BOOKING_CONFIG,
@@ -24,10 +13,10 @@ import {
   parisInstant,
 } from "../_booking/bookingLogic.mjs";
 import PrePaymentRecap from "../_components/PrePaymentRecap";
+import BookingSlotPicker from "../../../components/booking/BookingSlotPicker";
 import { isNonBlank, paymentLabel } from "../_components/prePaymentLogic.mjs";
 import "./booking.css";
 
-const WEEKDAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 const LEVEL_OPTIONS = [
   "Débutant·e — je construis mes bases",
   "Intermédiaire — je comprends mais je manque d’aisance",
@@ -143,6 +132,7 @@ function buildMonthDays(monthKey, now, offer, snapshot, config) {
 }
 
 function BookingCalendarContent({ offer }) {
+  const calendarTitleId = useId();
   const { user } = useUser();
   const { isAuthenticated, isLoading: convexAuthLoading } = useConvexAuth();
   const remoteSnapshot = useQuery("bookings:getBookingAvailability", isAuthenticated ? {} : "skip");
@@ -342,6 +332,9 @@ function BookingCalendarContent({ offer }) {
     if (/CREDITS_UNAVAILABLE|PAYMENT_REQUIRED/i.test(value || "")) {
       return "Ce crédit n’est plus disponible pour ce créneau. Choisis une autre date ou un autre mode.";
     }
+    if (/PRICE_CHANGED/.test(value || "")) {
+      return "Le tarif a changé depuis l’ouverture de cette page. Recharge-la pour voir le nouveau montant avant de réserver.";
+    }
     return "Le paiement n’a pas pu être préparé. Ton créneau n’a pas été confirmé.";
   }
 
@@ -358,6 +351,7 @@ function BookingCalendarContent({ offer }) {
       booking = await createHold({
         offerKey: offer.key,
         mode: offer.mode,
+        priceVersion: offer.priceVersion,
         date: selectedDate,
         time: selectedSlot,
         name: form.name,
@@ -433,11 +427,11 @@ function BookingCalendarContent({ offer }) {
 
   if (loadState === "error") {
     return (
-      <section className="am-booking-calendar" aria-labelledby="am-calendar-title">
+      <section className="am-booking-calendar" aria-labelledby={calendarTitleId}>
         <div className="am-calendar-state am-calendar-error" role="alert">
           <AlertCircle size={22} aria-hidden="true" />
           <div>
-            <h2 id="am-calendar-title">Les disponibilités sont indisponibles</h2>
+            <h2 id={calendarTitleId}>Les disponibilités sont indisponibles</h2>
             <p>{loadError}</p>
             <button type="button" className="am-button" onClick={() => window.location.reload()}>
               Réessayer
@@ -494,104 +488,27 @@ function BookingCalendarContent({ offer }) {
   }
 
   return (
-    <section className="am-booking-calendar" aria-labelledby="am-calendar-title">
-      <div className="am-calendar-heading">
-        <div>
-          <p className="am-eyebrow">DISPONIBILITÉS</p>
-          <h2 id="am-calendar-title">Choisis un jour</h2>
-          <p>Les horaires sont affichés dans le fuseau Europe/Paris.</p>
-        </div>
-        <div className="am-calendar-meta" aria-label="Règles de réservation">
-          <span><Clock3 size={17} aria-hidden="true" />{offer.durationLabel}</span>
-          <span><Globe2 size={17} aria-hidden="true" />{BOOKING_TIMEZONE}</span>
-        </div>
-      </div>
-
-      <div className="am-calendar-layout">
-        <div className="am-calendar-card">
-          <div className="am-calendar-toolbar">
-            <h3>{capitalize(monthLabel(monthCursor))}</h3>
-            <div className="am-calendar-nav" aria-label="Navigation mensuelle">
-              <button
-                type="button"
-                aria-label="Mois précédent"
-                disabled={previousDisabled}
-                onClick={() => navigateMonth(-1)}
-              >
-                <ChevronLeft size={19} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                aria-label="Mois suivant"
-                disabled={nextDisabled}
-                onClick={() => navigateMonth(1)}
-              >
-                <ChevronRight size={19} aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-
-          <div className="am-calendar-weekdays" aria-hidden="true">
-            {WEEKDAYS.map((day) => <span key={day}>{day}</span>)}
-          </div>
-          <div className="am-calendar-grid" aria-label={`Jours de ${monthLabel(monthCursor)}`}>
-            {monthDays.map((day) => {
-              const selected = day.dateKey === selectedDate;
-              return (
-                <button
-                  key={day.dateKey}
-                  type="button"
-                  className={`am-calendar-day${day.inMonth ? "" : " is-outside"}${day.isToday ? " is-today" : ""}${day.isBookable ? " is-available" : " is-closed"}${selected ? " is-selected" : ""}`}
-                  disabled={!day.isBookable || isSubmitting || isConfirmed}
-                  aria-pressed={selected}
-                  aria-label={`${formatDate(day.dateKey)} — ${day.isBookable ? "disponible" : "indisponible"}`}
-                  onClick={() => selectDate(day.dateKey)}
-                >
-                  <span>{day.dayNumber}</span>
-                  {day.isBookable && <i aria-hidden="true" />}
-                </button>
-              );
-            })}
-          </div>
-          <p className="am-calendar-legend"><i aria-hidden="true" />Jour disponible</p>
-        </div>
-
-        <aside className="am-slots-card" aria-labelledby="am-slots-title" aria-live="polite">
-          <div className="am-slots-heading">
-            <div>
-              <p className="am-eyebrow">CRÉNEAUX</p>
-              <h3 id="am-slots-title">{selectedDate ? formatDate(selectedDate) : "Sélectionne un jour"}</h3>
-            </div>
-            <CalendarDays size={23} aria-hidden="true" />
-          </div>
-          {selectedDate ? (
-            selectedDaySlots.length ? (
-              <div className="am-slots-list" role="list" aria-label="Créneaux disponibles">
-                {selectedDaySlots.map((time) => (
-                  <button
-                    key={time}
-                    type="button"
-                    className={`am-slot${selectedSlot === time ? " is-selected" : ""}`}
-                    aria-pressed={selectedSlot === time}
-                    disabled={isSubmitting || isConfirmed}
-                    onClick={() => selectSlot(time)}
-                  >
-                    <span>{formatTime(time)}</span>
-                    <small>{offer.durationLabel}</small>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="am-slots-empty">Aucun créneau ne correspond à cette journée. Choisis un autre jour.</p>
-            )
-          ) : (
-            <p className="am-slots-empty">Les jours avec un point coloré ont au moins un créneau disponible.</p>
-          )}
-          {selectedDay && !selectedDay.isBookable && selectedDate ? (
-            <p className="am-slots-empty">Cette journée n’a plus de créneau disponible.</p>
-          ) : null}
-        </aside>
-      </div>
+    <section className="am-booking-calendar" aria-labelledby={calendarTitleId}>
+      <BookingSlotPicker
+        titleId={calendarTitleId}
+        monthDays={monthDays}
+        monthLabel={monthLabel(monthCursor)}
+        formatDate={formatDate}
+        formatTime={formatTime}
+        timezone={BOOKING_TIMEZONE}
+        durationLabel={offer.durationLabel}
+        selectedDate={selectedDate}
+        selectedDay={selectedDay}
+        selectedDaySlots={selectedDaySlots}
+        selectedSlot={selectedSlot}
+        previousDisabled={previousDisabled}
+        nextDisabled={nextDisabled}
+        isSubmitting={isSubmitting}
+        isConfirmed={isConfirmed}
+        navigateMonth={navigateMonth}
+        selectDate={selectDate}
+        selectSlot={selectSlot}
+      />
 
       {submitError && !selectedSlot && !isConfirmed ? (
         <p className="am-form-error am-form-error-standalone" role="alert">
@@ -643,11 +560,11 @@ class BookingCalendarBoundary extends Component {
 
   render() {
     if (!this.state.failed) return this.props.children;
-    return <section className="am-booking-calendar" aria-labelledby="am-calendar-error-title">
+    return <section className="am-booking-calendar" aria-label="Les disponibilités sont indisponibles">
       <div className="am-calendar-state am-calendar-error" role="alert">
         <AlertCircle size={22} aria-hidden="true" />
         <div>
-          <h2 id="am-calendar-error-title">Les disponibilités sont indisponibles</h2>
+          <h2>Les disponibilités sont indisponibles</h2>
           <p>La connexion sécurisée n’a pas pu charger les disponibilités. Réessaie.</p>
           <button type="button" className="am-button" onClick={() => window.location.reload()}>Réessayer</button>
         </div>

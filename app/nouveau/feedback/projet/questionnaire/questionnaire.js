@@ -27,6 +27,7 @@ export default function ProjectQuestionnaire({ requestId = null }) {
     localDraftKey,
     serverRequest,
     serverLoading,
+    displayPrice,
     storedFiles,
     removeStoredFile,
   } = useClientRequestCheckout({
@@ -95,10 +96,12 @@ export default function ProjectQuestionnaire({ requestId = null }) {
   const field = (name, label, optional, placeholder) => <label className="am-project-field">{label}{optional && <small className="am-field-hint"><em>Facultatif</em></small>}<textarea className="am-field-control" name={name} rows={3} required={!optional} value={visibleAnswers[name]} onChange={e => { e.currentTarget.setCustomValidity(""); update(name,e.target.value); }} placeholder={placeholder} /></label>;
   const page = visibleStep === "recap" ? <PrePaymentRecap
     headingRef={recapHeading}
-    offer={animationProjectOffer}
-    paymentText={paymentLabel(animationProjectOffer.priceLabel)}
+    offer={{ ...animationProjectOffer, priceLabel: displayPrice?.priceLabel || "Tarif indisponible", launchPriceEnd: displayPrice?.version === 1 ? animationProjectOffer.launchPriceEnd : null }}
+    paymentText={displayPrice ? paymentLabel(displayPrice.priceLabel) : "Tarif indisponible"}
     onPayment={() => startCheckout({ answers: visibleAnswers, files: visibleFiles })}
-    paymentDisabled={paymentBusy}
+    paymentDisabled={paymentBusy || !displayPrice}
+    paymentBusyLabel={displayPrice ? undefined : "Tarif indisponible"}
+    paymentBusyMessage={displayPrice ? undefined : "Recharge la page pour connaître le montant avant de payer."}
     paymentError={paymentError}
     onEdit={() => dispatch({ type: "edit" })}
     files={[...visibleStoredFiles, ...visibleFiles]}

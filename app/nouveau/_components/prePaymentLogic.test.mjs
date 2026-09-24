@@ -53,6 +53,6 @@ test("la connexion à Stripe garde le récapitulatif visible au lieu de revenir 
 
 test("le duo précise le total pour deux et le payeur unique", () => {
   const duo = getBookingOffer("anglais", "duo");
-  assert.match(duo.payerNote, /68 € au total pour deux personnes/);
+  assert.match(duo.payerNote, /total pour deux personnes/);
   assert.match(duo.payerNote, /Un seul paiement et un seul compte/);
 });

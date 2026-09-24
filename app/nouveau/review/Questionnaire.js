@@ -58,6 +58,7 @@ export default function Questionnaire({ requestId = null }) {
     localDraftKey,
     serverRequest,
     serverLoading,
+    displayPrice,
   } = useClientRequestCheckout({
     offerKey: "review",
     draftStorageKey: STORAGE_KEY,
@@ -167,10 +168,12 @@ export default function Questionnaire({ requestId = null }) {
         {visibleStep === "recap" ? (
           <PrePaymentRecap
             headingRef={recapHeading}
-            offer={reviewOffer}
-            paymentText={paymentLabel(reviewOffer.priceLabel)}
+            offer={{ ...reviewOffer, priceLabel: displayPrice?.priceLabel || "Tarif indisponible", launchPriceEnd: displayPrice?.version === 1 ? reviewOffer.launchPriceEnd : null }}
+            paymentText={displayPrice ? paymentLabel(displayPrice.priceLabel) : "Tarif indisponible"}
             onPayment={() => startCheckout({ answers: visibleForm, files: [] })}
-            paymentDisabled={paymentBusy}
+            paymentDisabled={paymentBusy || !displayPrice}
+            paymentBusyLabel={displayPrice ? undefined : "Tarif indisponible"}
+            paymentBusyMessage={displayPrice ? undefined : "Recharge la page pour connaître le montant avant de payer."}
             paymentError={paymentError}
             onEdit={() => dispatch({ type: "edit" })}
             files={null}

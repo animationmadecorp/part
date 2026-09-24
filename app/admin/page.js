@@ -84,6 +84,12 @@ export default async function AdminHomePage() {
             title="Disponibilités"
             body="Modifier tes horaires habituels et les exceptions de calendrier."
           />
+          <AdminLinkCard
+            href="/admin/tarifs"
+            eyebrow="Offres et paiements"
+            title="Tarifs"
+            body="Modifier les montants des nouvelles réservations et commandes."
+          />
           <AdminContentCard studio={studio} />
         </section>
 

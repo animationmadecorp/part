@@ -4,6 +4,9 @@ import { Header, Footer } from "../_components/Shared";
 import EditorialHeading from "../_components/EditorialHeading";
 import EditorialSections from "../_components/EditorialSections";
 import { getEditorialPage } from "@/lib/sanity/content";
+import { getPublishedPriceCatalog, publishedPrice } from "@/lib/pricing-server";
+
+export const dynamic = "force-dynamic";
 
 const fallbackMetadata = {
   title: "Te faire connaître sur les réseaux — Animation Made",
@@ -21,6 +24,7 @@ export async function generateMetadata() {
 }
 
 export default async function Visibilite() {
+  const price = publishedPrice(await getPublishedPriceCatalog(), "request:contenu");
   const page = await getEditorialPage("/nouveau/visibilite");
   const hero = page?.hero || {};
   return <><Header/><main className="am-container am-product am-review-page">
@@ -37,8 +41,7 @@ export default async function Visibilite() {
         <div className="am-booking">
           <span className="am-tag">FICHE PERSONNALISÉE · SANS VISIO</span>
           <h2>Ta direction<br/><em>de contenu</em></h2>
-          <div className="am-price">58 €</div>
-          <p><em>Tarif de lancement valable jusqu’au 31 décembre 2026.</em></p>
+          <div className="am-price">{price.priceLabel}</div>
           <p><ClipboardList size={19}/>Un questionnaire approfondi avec liens et pièces jointes</p>
           <p><FileText size={19}/>Une fiche personnalisée à conserver</p>
           <p><em>Livraison sous 10 jours maximum après réception de ton questionnaire complet et des pièces jointes. Si un imprévu décale ce délai, tu es prévenu·e.</em></p>

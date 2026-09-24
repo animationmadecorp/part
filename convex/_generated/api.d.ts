@@ -16,11 +16,20 @@ import type * as clientDeliveries from "../clientDeliveries.js";
 import type * as clientNotifications from "../clientNotifications.js";
 import type * as clientRequestRules from "../clientRequestRules.js";
 import type * as clientRequests from "../clientRequests.js";
+import type * as deliveryNotifications_actions from "../deliveryNotifications/actions.js";
+import type * as englishLessonRules from "../englishLessonRules.js";
+import type * as englishLessons from "../englishLessons.js";
 import type * as notificationKeys from "../notificationKeys.js";
 import type * as notificationTemplates from "../notificationTemplates.js";
 import type * as ownerAdministration from "../ownerAdministration.js";
+import type * as paymentContractProofs from "../paymentContractProofs.js";
+import type * as planner from "../planner.js";
+import type * as plannerRules from "../plannerRules.js";
+import type * as pricing from "../pricing.js";
+import type * as reviewMigrations from "../reviewMigrations.js";
 import type * as reviewStudio from "../reviewStudio.js";
 import type * as reviewStudioRules from "../reviewStudioRules.js";
+import type * as reviewSubmissionRules from "../reviewSubmissionRules.js";
 import type * as users from "../users.js";
 
 import type {
@@ -38,11 +47,20 @@ declare const fullApi: ApiFromModules<{
   clientNotifications: typeof clientNotifications;
   clientRequestRules: typeof clientRequestRules;
   clientRequests: typeof clientRequests;
+  "deliveryNotifications/actions": typeof deliveryNotifications_actions;
+  englishLessonRules: typeof englishLessonRules;
+  englishLessons: typeof englishLessons;
   notificationKeys: typeof notificationKeys;
   notificationTemplates: typeof notificationTemplates;
   ownerAdministration: typeof ownerAdministration;
+  paymentContractProofs: typeof paymentContractProofs;
+  planner: typeof planner;
+  plannerRules: typeof plannerRules;
+  pricing: typeof pricing;
+  reviewMigrations: typeof reviewMigrations;
   reviewStudio: typeof reviewStudio;
   reviewStudioRules: typeof reviewStudioRules;
+  reviewSubmissionRules: typeof reviewSubmissionRules;
   users: typeof users;
 }>;
 

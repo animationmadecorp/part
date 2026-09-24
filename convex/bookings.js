@@ -19,6 +19,8 @@ import {
 import { notificationIdempotencyKey } from "./notificationKeys";
 import { renderBookingEmail, safeAppOrigin } from "./notificationTemplates";
 import { getResendConfig } from "../lib/resend-server.mjs";
+import { assertCompatiblePriceVersion, bookingPriceKey, formatPriceLabel, recordedAmount } from "../lib/pricing-core.mjs";
+import { getCurrentPrice } from "./pricing";
 
 const EFFECT_RETRY_AFTER_MS = 60 * 1000;
 const NOTIFICATION_RETRY_AFTER_MS = 5 * 60 * 1000;
@@ -42,6 +44,7 @@ const availabilityArgs = {
 const holdArgs = {
   offerKey: v.string(),
   mode: v.string(),
+  priceVersion: v.optional(v.number()),
   date: v.string(),
   time: v.string(),
   name: v.string(),
@@ -110,6 +113,8 @@ function safePublicBooking(booking, { includePrivate = false, now = Date.now() }
     timezone: booking.timezone,
     status: effectiveBookingStatus(booking, now),
     paymentStatus: booking.paymentStatus,
+    ...(booking.priceCents === undefined ? {} : { priceCents: booking.priceCents }),
+    ...(booking.priceVersion === undefined ? {} : { priceVersion: booking.priceVersion }),
     ...(booking.refundStatus === undefined ? {} : { refundStatus: booking.refundStatus }),
     ...(booking.refundedAmountCents === undefined ? {} : { refundedAmountCents: booking.refundedAmountCents }),
     creditsConsumed: booking.creditsConsumed,
@@ -665,6 +670,9 @@ export const createHold = mutationGeneric({
 
     const offer = getBookingOffer(args.offerKey, args.mode);
     if (!offer) bookingError("INVALID_OFFER", "This offer cannot be booked");
+    const price = assertCompatiblePriceVersion(
+      await getCurrentPrice(ctx, bookingPriceKey(offer.key, offer.mode)), args.priceVersion,
+    );
     const date = assertText(args.date, "date", 10);
     const time = assertText(args.time, "time", 5);
     const name = assertText(args.name, "name", 120);
@@ -725,7 +733,8 @@ export const createHold = mutationGeneric({
       endAt: startAt + offer.durationMinutes * 60 * 1000,
       durationMinutes: offer.durationMinutes,
       timezone: BOOKING_TIMEZONE,
-      priceCents: offer.priceCents,
+      priceCents: price.priceCents,
+      priceVersion: price.version,
       status: "pending",
       paymentStatus: entitlement ? "paid" : "unpaid",
       holdExpiresAt: now + HOLD_DURATION_MINUTES * 60 * 1000,
@@ -797,14 +806,15 @@ export const getCheckoutPayload = queryGeneric({
     }
     const offer = getBookingOffer(booking.offerKey, booking.mode);
     if (!offer) bookingError("INVALID_OFFER", "Unknown booking offer");
+    const amountCents = recordedAmount(booking.priceCents, offer.priceCents);
     return {
       bookingId: booking._id,
-      amountCents: booking.priceCents ?? offer.priceCents,
+      amountCents,
       currency: "eur",
       offerKey: offer.key,
       mode: offer.mode,
       name: offer.title,
-      description: `${offer.modeLabel} · ${offer.priceLabel}`,
+      description: `${offer.modeLabel} · ${formatPriceLabel(amountCents, bookingPriceKey(offer.key, offer.mode))}`,
       customerEmail: booking.email,
       holdExpiresAt: booking.holdExpiresAt,
       stripeExpiresAt: booking.stripeExpiresAt || booking.createdAt + (HOLD_DURATION_MINUTES + 30) * 60 * 1000,
@@ -2118,6 +2128,12 @@ export const getBookingOfferCatalog = queryGeneric({
   args: {},
   handler: async (ctx) => {
     await requireIdentity(ctx);
-    return BOOKING_OFFERS;
+    return Object.fromEntries(await Promise.all(Object.entries(BOOKING_OFFERS).map(async ([key, offer]) => [
+      key,
+      { ...offer, modes: Object.fromEntries(await Promise.all(Object.entries(offer.modes).map(async ([mode, variant]) => {
+        const price = await getCurrentPrice(ctx, bookingPriceKey(key, mode));
+        return [mode, { ...variant, priceCents: price.priceCents, priceLabel: formatPriceLabel(price.priceCents, price.variantKey), priceVersion: price.version }];
+      }))) },
+    ])));
   },
 });

@@ -58,6 +58,15 @@ export default defineSchema({
     updatedBy: v.string(),
   }).index("by_key", ["key"]),
 
+  prices: defineTable({
+    variantKey: v.string(),
+    priceCents: v.number(),
+    currency: v.literal("eur"),
+    version: v.number(),
+    updatedAt: v.number(),
+    updatedBy: v.string(),
+  }).index("by_variant_key", ["variantKey"]),
+
   bookings: defineTable({
     clerkUserId: v.string(),
     tokenIdentifier: v.string(),
@@ -70,6 +79,7 @@ export default defineSchema({
     durationMinutes: v.number(),
     timezone: v.string(),
     priceCents: v.optional(v.number()),
+    priceVersion: v.optional(v.number()),
     status: v.union(
       v.literal("pending"),
       v.literal("confirmed"),
@@ -289,6 +299,7 @@ export default defineSchema({
     ),
     answersJson: v.string(),
     priceCents: v.number(),
+    priceVersion: v.optional(v.number()),
     currency: v.string(),
     refundedAmountCents: v.optional(v.number()),
     stripeCheckoutSessionId: v.optional(v.string()),

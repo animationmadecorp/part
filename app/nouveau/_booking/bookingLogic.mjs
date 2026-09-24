@@ -5,6 +5,7 @@
  * dependency. The local adapter and a future Convex adapter can both call the
  * same functions before accepting a booking.
  */
+import { bookingPriceKey, defaultPrice, formatPriceLabel } from "../../../lib/pricing-core.mjs";
 
 export const BOOKING_TIMEZONE = "Europe/Paris";
 export const DAY_MS = 24 * 60 * 60 * 1000;
@@ -42,8 +43,8 @@ export const BOOKING_OFFERS = Object.freeze({
         durationMinutes: 60,
         durationLabel: "1 heure",
         slotIntervalMinutes: 60,
-        price: 55,
-        priceLabel: "55 €",
+        price: defaultPrice(bookingPriceKey("anglais", "solo")).priceCents / 100,
+        priceLabel: formatPriceLabel(defaultPrice(bookingPriceKey("anglais", "solo")).priceCents, bookingPriceKey("anglais", "solo")),
       }),
       "solo-4h": Object.freeze({
         mode: "solo-4h",
@@ -53,8 +54,8 @@ export const BOOKING_OFFERS = Object.freeze({
         slotIntervalMinutes: 60,
         sessionCount: 4,
         validityMonths: 3,
-        price: 200,
-        priceLabel: "200 € le pack",
+        price: defaultPrice(bookingPriceKey("anglais", "solo-4h")).priceCents / 100,
+        priceLabel: formatPriceLabel(defaultPrice(bookingPriceKey("anglais", "solo-4h")).priceCents, bookingPriceKey("anglais", "solo-4h")),
       }),
       "solo-8h": Object.freeze({
         mode: "solo-8h",
@@ -64,8 +65,8 @@ export const BOOKING_OFFERS = Object.freeze({
         slotIntervalMinutes: 60,
         sessionCount: 8,
         validityMonths: 6,
-        price: 360,
-        priceLabel: "360 € le pack",
+        price: defaultPrice(bookingPriceKey("anglais", "solo-8h")).priceCents / 100,
+        priceLabel: formatPriceLabel(defaultPrice(bookingPriceKey("anglais", "solo-8h")).priceCents, bookingPriceKey("anglais", "solo-8h")),
       }),
       duo: Object.freeze({
         mode: "duo",
@@ -73,9 +74,9 @@ export const BOOKING_OFFERS = Object.freeze({
         durationMinutes: 60,
         durationLabel: "1 heure",
         slotIntervalMinutes: 60,
-        price: 68,
-        priceLabel: "68 €",
-        payerNote: "68 € au total pour deux personnes. Un seul paiement et un seul compte pour la réservation.",
+        price: defaultPrice(bookingPriceKey("anglais", "duo")).priceCents / 100,
+        priceLabel: formatPriceLabel(defaultPrice(bookingPriceKey("anglais", "duo")).priceCents, bookingPriceKey("anglais", "duo")),
+        payerNote: "Le tarif affiché est le total pour deux personnes. Un seul paiement et un seul compte pour la réservation.",
       }),
     },
   }),

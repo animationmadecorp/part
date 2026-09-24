@@ -6,6 +6,9 @@ import { getBookingOffer } from "../_booking/bookingLogic.mjs";
 import BookingCalendar from "./BookingCalendar";
 import AccessBoundary from "../_components/AccessBoundary";
 import { requireConnectedMemberPage } from "@/lib/server-auth";
+import { getPublishedPriceCatalog, publishedPrice } from "@/lib/pricing-server";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Réserver un rendez-vous — Animation Made",
@@ -29,10 +32,20 @@ export default async function BookingPage({ searchParams }) {
   if (firstQueryValue(query?.offre) === "projet-animation") {
     redirect("/nouveau/feedback#projet-animation");
   }
-  const offer = getBookingOffer(
+  const baseOffer = getBookingOffer(
     firstQueryValue(query?.offre),
     firstQueryValue(query?.format),
   );
+  const quote = access.ok && baseOffer
+    ? publishedPrice(await getPublishedPriceCatalog(), `booking:${baseOffer.key}:${baseOffer.mode}`)
+    : null;
+  const offer = quote ? {
+    ...baseOffer,
+    priceCents: quote.priceCents,
+    price: quote.priceCents / 100,
+    priceLabel: quote.priceLabel,
+    priceVersion: quote.version,
+  } : baseOffer;
 
   return (
     <>

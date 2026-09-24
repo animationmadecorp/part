@@ -39,6 +39,7 @@ export default function ContentQuestionnaire({ requestId = null }) {
     localDraftKey,
     serverRequest,
     serverLoading,
+    displayPrice,
     storedFiles,
     removeStoredFile,
   } = useClientRequestCheckout({
@@ -124,15 +125,19 @@ export default function ContentQuestionnaire({ requestId = null }) {
     headingRef={recapHeading}
     offer={{
       ...contentOffer,
+      priceLabel: displayPrice?.priceLabel || "Tarif indisponible",
+      launchPriceEnd: displayPrice?.version === 1 ? contentOffer.launchPriceEnd : null,
       format: "Fiche personnalisée · Sans visio",
       details: [
         "Une fiche personnalisée préparée à partir de ton questionnaire, sans appel vidéo.",
         "Livraison sous 10 jours maximum après réception de ton questionnaire complet et du paiement.",
       ],
     }}
-    paymentText={paymentLabel(contentOffer.priceLabel)}
+    paymentText={displayPrice ? paymentLabel(displayPrice.priceLabel) : "Tarif indisponible"}
     onPayment={() => startCheckout({ answers: visibleAnswers, files: visibleFiles })}
-    paymentDisabled={paymentBusy}
+    paymentDisabled={paymentBusy || !displayPrice}
+    paymentBusyLabel={displayPrice ? undefined : "Tarif indisponible"}
+    paymentBusyMessage={displayPrice ? undefined : "Recharge la page pour connaître le montant avant de payer."}
     paymentError={paymentError}
     onEdit={editAnswers}
     files={[...visibleStoredFiles, ...visibleFiles]}

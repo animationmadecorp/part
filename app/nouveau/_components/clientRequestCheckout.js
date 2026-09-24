@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { formatPriceLabel, requestPriceKey } from "@/lib/pricing-core.mjs";
 
 const providersConfigured = Boolean(
   process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
@@ -73,12 +74,15 @@ function writePendingUploads(storageKey, value) {
 function readableError(error) {
   const message = error instanceof Error ? error.message : "";
   if (/UNAUTHENTICATED|Connecte-toi|unauthenticated/i.test(message)) return "Connecte-toi pour enregistrer ton dossier et accéder au paiement.";
+  if (/PRICE_QUOTE_DIFFERENT/i.test(message)) return "Un dossier déjà commencé conserve un autre tarif. Vérifie le montant mis à jour dans le récapitulatif avant de payer.";
+  if (/PRICE_UNAVAILABLE/i.test(message)) return "Le tarif est indisponible pour le moment. Recharge la page avant de payer.";
   if (/configuration_required|unavailable|configuration/i.test(message)) return "La connexion sécurisée n’est pas disponible dans cet environnement.";
   if (/FILE_QUOTA|quota/i.test(message)) return "La limite de pièces jointes de ce dossier est atteinte.";
   if (/File type|file type|type de fichier/i.test(message)) return "Ce type de fichier n’est pas accepté. Vérifie le format indiqué sous le bouton.";
   if (/too large|size|taille/i.test(message)) return "Ce fichier est trop volumineux pour ce dossier.";
   if (/Stripe test configuration/i.test(message)) return "Le paiement Stripe test n’est pas encore configuré dans cet environnement.";
   if (/ALREADY_PAID|NEW_DRAFT_REQUIRED/i.test(message)) return "Ce dossier est déjà fermé. Un nouveau dossier sera créé pour cette commande.";
+  if (/PRICE_CHANGED/i.test(message)) return "Le tarif a changé. Recharge la page pour voir le nouveau montant avant de payer.";
   if (/INVALID_STATE|checkout_already_submitted/i.test(message)) return "Ce paiement est déjà en cours. Vérifie la page de confirmation avant de réessayer.";
   if (/INVALID_INPUT|Missing|answers/i.test(message)) return "Complète les éléments obligatoires avant de continuer.";
   return "Le dossier n’a pas pu être enregistré. Tu peux réessayer sans perdre tes réponses.";
@@ -93,6 +97,8 @@ function useConfiguredCheckout({ offerKey, draftStorageKey: draftStorageKeyBase,
   const { user } = useUser();
   const userId = user?.id || null;
   const createDraft = useMutation("clientRequests:createDraft");
+  const publishedCatalog = useQuery("pricing:getPublicCatalog", {});
+  const priceQuote = publishedCatalog?.prices?.[requestPriceKey(offerKey)] || null;
   const saveDraft = useMutation("clientRequests:saveDraft");
   const prepareAttachment = useMutation("clientRequests:prepareAttachment");
   const recordAttachmentStorage = useMutation("clientRequests:recordAttachmentStorage");
@@ -132,6 +138,13 @@ function useConfiguredCheckout({ offerKey, draftStorageKey: draftStorageKeyBase,
   const serverRequest = activeRequestId && queriedServerRequest?.id === activeRequestId
     ? queriedServerRequest
     : null;
+  const displayPrice = serverRequest?.priceCents
+    ? {
+        priceCents: serverRequest.priceCents,
+        priceLabel: formatPriceLabel(serverRequest.priceCents, requestPriceKey(offerKey)),
+        version: serverRequest.priceVersion,
+      }
+    : priceQuote;
   const [removedFileIds, setRemovedFileIds] = useState(() => new Set());
   const storedFiles = (serverRequest?.files || []).filter((file) => !removedFileIds.has(file.id));
 
@@ -145,6 +158,7 @@ function useConfiguredCheckout({ offerKey, draftStorageKey: draftStorageKeyBase,
   /* eslint-enable react-hooks/set-state-in-effect */
 
   async function createOrReuseDraft() {
+    if (!priceQuote) throw new Error("PRICE_UNAVAILABLE: Current price is not ready");
     const draftKeyName = `animation-made:client-request:${userId}:${offerKey}:draft-key:v2`;
     let draftKey;
     try { draftKey = window.localStorage.getItem(draftKeyName); } catch { /* Continue with an in-memory key. */ }
@@ -154,7 +168,7 @@ function useConfiguredCheckout({ offerKey, draftStorageKey: draftStorageKeyBase,
     }
 
     try {
-      return { draft: await createDraft({ draftKey, offerKey }), draftKeyName };
+      return { draft: await createDraft({ draftKey, offerKey, priceVersion: priceQuote.version }), draftKeyName };
     } catch (failure) {
       if (!isNewDraftRequired(failure)) throw failure;
       // A paid/refunded/cancelled dossier cannot be mutated. Rotate both
@@ -165,7 +179,7 @@ function useConfiguredCheckout({ offerKey, draftStorageKey: draftStorageKeyBase,
       } catch { /* The new server draft is still safe to create. */ }
       const freshDraftKey = randomKey(`draft:${offerKey}`);
       try { window.localStorage.setItem(draftKeyName, freshDraftKey); } catch { /* Continue without persistent draft-key storage. */ }
-      return { draft: await createDraft({ draftKey: freshDraftKey, offerKey }), draftKeyName };
+      return { draft: await createDraft({ draftKey: freshDraftKey, offerKey, priceVersion: priceQuote.version }), draftKeyName };
     }
   }
 
@@ -224,6 +238,12 @@ function useConfiguredCheckout({ offerKey, draftStorageKey: draftStorageKeyBase,
             userId,
             sourceRequestId: initialRequestId || null,
           });
+        }
+        // A reused idempotent draft can carry an older frozen amount even
+        // when this page initially displayed the current catalog price.
+        // Show the saved amount and require a second, informed payment click.
+        if (draft?.priceCents !== displayPrice?.priceCents) {
+          throw new Error("PRICE_QUOTE_DIFFERENT: Recheck the saved draft amount");
         }
       }
       if (!requestId) throw new Error("request_missing");
@@ -454,6 +474,7 @@ function useConfiguredCheckout({ offerKey, draftStorageKey: draftStorageKeyBase,
     serverRequest,
     serverLoading,
     storedFiles,
+    displayPrice,
   };
 }
 
@@ -474,6 +495,7 @@ export function useClientRequestCheckout(options) {
       serverRequest: null,
       serverLoading: false,
       storedFiles: [],
+      displayPrice: null,
     };
   }
   // The branch is a module-level configuration invariant: the provider is

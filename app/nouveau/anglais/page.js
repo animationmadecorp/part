@@ -4,6 +4,18 @@ import { Header, Footer } from "../_components/Shared";
 import EditorialHeading from "../_components/EditorialHeading";
 import EditorialSections from "../_components/EditorialSections";
 import { getEditorialPage } from "@/lib/sanity/content";
+import { getPublishedPriceCatalog, publishedPrice } from "@/lib/pricing-server";
+
+function packComparison(pack, single, count) {
+  const perCourse = `${pack.priceCents % count ? "environ " : ""}${(pack.priceCents / count / 100).toLocaleString("fr-FR", { maximumFractionDigits: 2 })}`;
+  const savingsCents = single.priceCents * count - pack.priceCents;
+  return {
+    perCourse,
+    savings: savingsCents > 0 ? `${(savingsCents / 100).toLocaleString("fr-FR")} € économisés` : null,
+  };
+}
+
+export const dynamic = "force-dynamic";
 
 const fallbackMetadata = {
   title: "Cours d’anglais pour les artistes — Animation Made",
@@ -21,6 +33,13 @@ export async function generateMetadata() {
 }
 
 export default async function Anglais() {
+  const catalog = await getPublishedPriceCatalog();
+  const solo = publishedPrice(catalog, "booking:anglais:solo");
+  const four = publishedPrice(catalog, "booking:anglais:solo-4h");
+  const eight = publishedPrice(catalog, "booking:anglais:solo-8h");
+  const duo = publishedPrice(catalog, "booking:anglais:duo");
+  const fourComparison = packComparison(four, solo, 4);
+  const eightComparison = packComparison(eight, solo, 8);
   const page = await getEditorialPage("/nouveau/anglais");
   const hero = page?.hero || {};
   const sections = page?.sections?.map((section) => {
@@ -55,7 +74,7 @@ export default async function Anglais() {
         <div className="am-booking">
           <span className="am-tag">COURS PARTICULIER</span>
           <h2>L’anglais<br/><em>à ton rythme</em></h2>
-          <div className="am-price">55 €</div>
+          <div className="am-price">{solo.priceLabel}</div>
           <p><Clock3 size={19}/>Une heure de cours</p>
           <p><UserRound size={19}/>Un cours individuel sur mesure</p>
           <p><Video size={19}/>En visioconférence</p>
@@ -64,30 +83,30 @@ export default async function Anglais() {
         <div className="am-booking am-project-booking">
           <span className="am-tag">PACK INDIVIDUEL · 4 HEURES</span>
           <h2>Installer<br/><em>une régularité</em></h2>
-          <div className="am-price">200 €</div>
+          <div className="am-price">{four.priceLabel.replace(/ le pack$/, "")}</div>
           <p><Clock3 size={19}/>4 cours individuels d’une heure</p>
-          <p><strong>50 € par cours · 20 € économisés</strong></p>
+          <p><strong>{fourComparison.perCourse} € par cours{fourComparison.savings ? ` · ${fourComparison.savings}` : ""}</strong></p>
           <p><em>4 heures à utiliser dans les 3 mois suivant l’achat.</em></p>
-          <p><em>Par rapport à quatre cours à l’unité à 55 €.</em></p>
+          {fourComparison.savings ? <p><em>Par rapport à quatre cours à l’unité à {solo.priceLabel}.</em></p> : null}
           <p>Leçons complémentaires incluses dès ton premier cours.</p>
           <Link className="am-button" href="/nouveau/reserver?offre=anglais&format=solo-4h">Réserver mes 4 heures</Link>
         </div>
         <div className="am-booking am-project-booking">
           <span className="am-tag">PACK INDIVIDUEL · 8 HEURES</span>
           <h2>Pratiquer<br/><em>dans la durée</em></h2>
-          <div className="am-price">360 €</div>
+          <div className="am-price">{eight.priceLabel.replace(/ le pack$/, "")}</div>
           <p><Clock3 size={19}/>8 cours individuels d’une heure</p>
-          <p><strong>45 € par cours · 80 € économisés</strong></p>
+          <p><strong>{eightComparison.perCourse} € par cours{eightComparison.savings ? ` · ${eightComparison.savings}` : ""}</strong></p>
           <p><em>8 heures à utiliser dans les 6 mois suivant l’achat.</em></p>
-          <p><em>Par rapport à huit cours à l’unité à 55 €.</em></p>
+          {eightComparison.savings ? <p><em>Par rapport à huit cours à l’unité à {solo.priceLabel}.</em></p> : null}
           <p>Leçons complémentaires incluses dès ton premier cours.</p>
           <Link className="am-button" href="/nouveau/reserver?offre=anglais&format=solo-8h">Réserver mes 8 heures</Link>
         </div>
         <div className="am-booking am-project-booking">
           <span className="am-tag">COURS EN DUO</span>
           <h2>Apprendre<br/><em>avec un ami</em></h2>
-          <div className="am-price">68 €</div>
-          <p><strong>Pour deux, soit 34 € par personne.</strong></p>
+          <div className="am-price">{duo.priceLabel}</div>
+          <p><strong>Pour deux, soit {duo.priceCents % 2 ? "environ " : ""}{(duo.priceCents / 2 / 100).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} € par personne.</strong></p>
           <p><Clock3 size={19}/>Une heure de cours ensemble</p>
           <p><UsersRound size={19}/>Vous venez avec votre binôme</p>
           <p><Video size={19}/>En visioconférence</p>
