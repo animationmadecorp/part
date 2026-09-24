@@ -119,14 +119,17 @@
 .am-new .am-ribbon-page{position:relative;isolation:isolate;overflow:clip}
 .am-new .am-page-ribbon{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.6}
 .am-new .am-ribbon-page>section{position:relative;z-index:1}
-.am-new .am-ribbon-gap{height:64px;pointer-events:none}
+.am-new .am-ribbon-gap{height:24px;pointer-events:none}
 .am-new .am-ribbon-gap+.am-section,.am-new .am-ribbon-gap+.am-problems,.am-new .am-ribbon-gap+.am-end{padding-top:28px}
-@media(max-width:760px){.am-new .am-ribbon-gap{height:48px}.am-new .am-page-ribbon{opacity:.4}}
+@media(max-width:760px){.am-new .am-ribbon-gap{height:18px}.am-new .am-page-ribbon{opacity:.4}}
 .am-new .am-hero h1{font-size:clamp(2.6rem,4.8vw,4.6rem);margin:18px 0 22px}
 .am-new .am-hero .am-lead{max-width:640px;line-height:1.7;margin-inline:auto}
 .am-new .am-hero-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;margin-top:24px}
 .am-new .am-hero-actions .am-button{margin-top:0}
 .am-new .am-review-page .am-product-section{border:0}
+.am-new .am-review-page .am-lead{margin-bottom:0}
+.am-new .am-review-page .am-product-section:first-of-type{padding:12px 0 24px}
+.am-new .am-review-page .am-product-section:first-of-type>p{font-size:1rem;line-height:1.7;margin-bottom:0}
 .am-new .am-review-intro{margin:18px 0 24px;font-size:.95rem;max-width:60ch}
 .am-new .am-review-contents{display:grid;gap:22px}
 .am-new .am-review-choices{padding-left:22px;margin:22px 0;display:grid;gap:18px}

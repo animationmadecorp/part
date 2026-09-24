@@ -9,7 +9,7 @@ import { getPublicEditorialContent } from "@/lib/sanity/content";
 const fallbackMetadata = {
   title: "Animation Made — faire de ton talent une vraie trajectoire",
   description:
-    "Des cours et des retours personnalisés pour progresser en animation, construire ton showreel, apprendre en anglais et faire connaître ton travail.",
+    "Des cours et une documentation faite sur-mesure pour progresser en animation, construire ton showreel, améliorer ton anglais spécifiquement dans ces disciplines ou faire connaître ton travail sur les réseaux.",
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
 };
@@ -41,7 +41,7 @@ return <><Header/><main className="am-ribbon-page"><PageRibbon/>
 <EditorialSections sections={home?.sections} styles={["gift"]}/>
 <EditorialSections sections={home?.sections} styles={["default", "feature", "prose", "cards", "steps", "list"]}/>
 <div className="am-ribbon-gap" aria-hidden="true"/>
-<section id="programmes" className="am-section am-container"><div className="am-section-head"><div><p className="am-eyebrow">CE QUE JE TRANSMETS</p><h2>Les cours<br/><em>et les reviews.</em></h2></div><p>Choisis selon ton besoin,<br/>pas un parcours imposé.</p></div><div className="am-offers">{offers.map(offer=>{
+<section id="programmes" className="am-section am-container"><div className="am-section-head"><div><p className="am-eyebrow">CE QUE JE TRANSMETS</p><h2>Les cours<br/><em>et les reviews.</em></h2></div></div><div className="am-offers">{offers.map(offer=>{
   const Icon=icons[offer.icon];
   const linked=linkedOffers.has(offer.slug);
   const Card=linked ? Link : "article";
