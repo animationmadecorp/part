@@ -5,6 +5,7 @@ import {
 } from "convex/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api.js";
+import { resolveOwnerEmail } from "../clientRequestEmail.js";
 import {
   isRetryableResendReason,
   prepareDeliveryNotification,
@@ -104,7 +105,8 @@ export async function enqueueDeliveryNotification(ctx, { requestId, kind, source
   const request = await ctx.db.get(requestId);
   if (!request) deliveryError("NOT_FOUND", "Client request not found");
   const now = Number.isSafeInteger(publishedAt) ? publishedAt : Date.now();
-  const recipient = normalizeEmail(request.email);
+  const recipient = await resolveOwnerEmail(ctx, request, request.email);
+  if (recipient && !normalizeEmail(request.email)) await ctx.db.patch(requestId, { email: recipient });
   const paid = isPaidRequest(request);
   const status = paid && recipient ? "pending" : "skipped";
   const lastError = !paid ? "request_not_paid" : recipient ? undefined : "recipient_missing";

@@ -16,6 +16,7 @@ import {
 } from "./clientRequestRules";
 import { assertCompatiblePriceVersion, requestPriceKey } from "../lib/pricing-core.mjs";
 import { getCurrentPrice } from "./pricing";
+import { normalizeRequestEmail, resolveOwnerEmail } from "./clientRequestEmail";
 
 const REQUEST_STATUSES_EDITABLE = new Set(["draft", "awaiting_payment", "payment_failed", "expired"]);
 const UPLOAD_TTL_MS = 60 * 60 * 1000;
@@ -231,6 +232,10 @@ export const createDraft = mutationGeneric({
       if (["paid", "refunded", "cancelled"].includes(previous.status)) {
         requestError("NEW_DRAFT_REQUIRED", "This dossier is closed; create a new draft");
       }
+      if (!normalizeRequestEmail(previous.email)) {
+        const email = await resolveOwnerEmail(ctx, current, current.identity.email);
+        if (email) await ctx.db.patch(previous._id, { email });
+      }
       return safeRequest(previous, await getActiveFiles(ctx, previous._id));
     }
 
@@ -239,10 +244,11 @@ export const createDraft = mutationGeneric({
     );
 
     const now = Date.now();
+    const email = await resolveOwnerEmail(ctx, current, current.identity.email);
     const requestId = await ctx.db.insert("clientRequests", {
       clerkUserId: current.clerkUserId,
       tokenIdentifier: current.tokenIdentifier,
-      ...(typeof current.identity.email === "string" ? { email: current.identity.email } : {}),
+      ...(email ? { email } : {}),
       draftKey,
       offerKey: offer.key,
       status: "draft",
@@ -558,6 +564,8 @@ export const prepareCheckout = mutationGeneric({
   handler: async (ctx, args) => {
     const current = await requireIdentity(ctx);
     const request = await getOwnedRequest(ctx, args.requestId, current);
+    const email = await resolveOwnerEmail(ctx, current, normalizeRequestEmail(request.email) || current.identity.email);
+    if (!normalizeRequestEmail(request.email) && email) await ctx.db.patch(request._id, { email });
     const offer = getClientRequestOffer(request.offerKey);
     if (!offer) requestError("INVALID_OFFER", "This client request offer is not available");
     if (request.status === "paid") requestError("ALREADY_PAID", "This request is already paid");
@@ -593,7 +601,7 @@ export const prepareCheckout = mutationGeneric({
     } else if (feedback) {
       await ctx.db.patch(request._id, { ...preparationPatch, updatedAt: now });
     }
-    return checkoutPayload({ ...request, status: nextStatus, ...preparationPatch }, current, offer);
+    return checkoutPayload({ ...request, ...(email ? { email } : {}), status: nextStatus, ...preparationPatch }, current, offer);
   },
 });
 

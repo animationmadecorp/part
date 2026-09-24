@@ -14,6 +14,8 @@ import type * as bookingRules from "../bookingRules.js";
 import type * as bookings from "../bookings.js";
 import type * as clientDeliveries from "../clientDeliveries.js";
 import type * as clientNotifications from "../clientNotifications.js";
+import type * as clientRequestEmail from "../clientRequestEmail.js";
+import type * as clientRequestEmailRepair from "../clientRequestEmailRepair.js";
 import type * as clientRequestRules from "../clientRequestRules.js";
 import type * as clientRequests from "../clientRequests.js";
 import type * as deliveryNotifications_actions from "../deliveryNotifications/actions.js";
@@ -45,6 +47,8 @@ declare const fullApi: ApiFromModules<{
   bookings: typeof bookings;
   clientDeliveries: typeof clientDeliveries;
   clientNotifications: typeof clientNotifications;
+  clientRequestEmail: typeof clientRequestEmail;
+  clientRequestEmailRepair: typeof clientRequestEmailRepair;
   clientRequestRules: typeof clientRequestRules;
   clientRequests: typeof clientRequests;
   "deliveryNotifications/actions": typeof deliveryNotifications_actions;

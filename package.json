@@ -20,6 +20,7 @@
     "verify:review-studio": "node scripts/verify-review-studio.mjs",
     "verify:review-submissions": "node scripts/verify-review-submissions.mjs",
     "verify:delivery-notifications": "node scripts/verify-delivery-notifications.mjs",
+    "verify:client-request-emails": "node scripts/verify-client-request-emails.mjs",
     "verify:stripe-contract": "node scripts/verify-stripe-contract.mjs"
   },
   "dependencies": {
