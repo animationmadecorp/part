@@ -138,5 +138,28 @@ function PurchaseRow({ purchase }) {
       setInvoiceLoading(false);
     }
   }
-  return <li className="am-account-purchase"><div className="am-account-purchase-top"><div><h3>{purchase.title}</h3><p>{purchase.detail}</p></div><div className="am-account-purchase-status"><strong>{purchase.status}</strong>{purchase.amount && <span>{purchase.amount}</span>}{dateLabel && <time dateTime={dateTime}>{dateLabel}</time>}</div></div>{actionHref && <Link className="am-account-purchase-link" href={actionHref}>{actionLabel} <ArrowRight size={14} aria-hidden="true"/></Link>}{canShowInvoice && <div className="am-account-invoice"><button type="button" className="am-account-purchase-link" onClick={loadInvoice} disabled={invoiceLoading}>{invoiceLoading ? "Recherche de la facture…" : invoice?.status === "ready" ? "Actualiser les documents" : "Voir ma facture"}</button>{invoice?.status === "ready" && <span><a href={invoice.url} target="_blank" rel="noopener noreferrer">Facture {invoice.number || ""}</a>{invoice.pdf && <> · <a href={invoice.pdf} target="_blank" rel="noopener noreferrer">PDF</a></>}{invoice.creditNotes?.map((note, index) => <span key={`${note.number || "avoir"}-${index}`}> · <a href={note.pdf} target="_blank" rel="noopener noreferrer">Avoir {note.number || ""}</a></span>)}</span>}{invoice?.status === "pending" && <span role="status">La facture est en préparation. Réessaie dans quelques instants.</span>}{invoice?.status === "unavailable" && <span role="status">Aucune facture automatique pour cet achat. Tu peux demander un justificatif ci-dessous.</span>}{invoice?.status === "error" && <span role="alert">Impossible de charger la facture. Réessaie.</span>}</div>}</li>;
+  return <li className="am-account-purchase">
+    <div className="am-account-purchase-top">
+      <div><h3>{purchase.title}</h3><p>{purchase.detail}</p></div>
+      <div className="am-account-purchase-status">
+        <strong>{purchase.status}</strong>
+        {purchase.amount && <span>{purchase.amount}</span>}
+        {dateLabel && <time dateTime={dateTime}>{dateLabel}</time>}
+      </div>
+    </div>
+    {actionHref && <Link className="am-account-purchase-link" href={actionHref}>{actionLabel} <ArrowRight size={14} aria-hidden="true"/></Link>}
+    {canShowInvoice && <div className="am-account-invoice">
+      <button type="button" className="am-account-purchase-link" onClick={loadInvoice} disabled={invoiceLoading}>
+        {invoiceLoading ? "Recherche des documents…" : invoice?.status === "ready" ? "Actualiser les documents" : "Voir mes documents de paiement"}
+      </button>
+      {invoice?.status === "ready" && <span>
+        <a href={invoice.url} target="_blank" rel="noopener noreferrer">Facture {invoice.number || ""}</a>
+        {invoice.receipt && <> · <a href={invoice.receipt} target="_blank" rel="noopener noreferrer">Reçu du paiement</a></>}
+        {invoice.creditNotes?.map((note, index) => <span key={`${note.number || "avoir"}-${index}`}> · <a href={note.pdf} target="_blank" rel="noopener noreferrer">Avoir {note.number || ""}</a></span>)}
+      </span>}
+      {invoice?.status === "pending" && <span role="status">La facture est en préparation. Réessaie dans quelques instants.</span>}
+      {invoice?.status === "unavailable" && <span role="status">Aucune facture automatique pour cet achat. Tu peux demander un justificatif ci-dessous.</span>}
+      {invoice?.status === "error" && <span role="alert">Impossible de charger les documents. Réessaie.</span>}
+    </div>}
+  </li>;
 }

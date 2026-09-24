@@ -79,7 +79,9 @@ function BookingConfirmationContent({ bookingId, cancelled = false }) {
     <h1 id="booking-confirmation-title">Ton cours d’anglais est réservé</h1>
     <div className="am-confirmation-summary" aria-label="Récapitulatif de la réservation">
       <div><span>Offre</span><strong>{offer?.modeLabel || booking.mode}</strong></div>
-      <div><span>Crédit</span><strong>1 heure décomptée</strong></div>
+      {offer?.sessionCount > 1
+        ? <div><span>Crédit du pack</span><strong>1 heure utilisée pour ce cours</strong></div>
+        : <div><span>Durée du cours</span><strong>1 heure</strong></div>}
     </div>
     <div className="am-confirmation-appointment" aria-label="Ton rendez-vous">
       <h2>Ton rendez-vous</h2>

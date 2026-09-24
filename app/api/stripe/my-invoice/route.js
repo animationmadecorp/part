@@ -1,6 +1,6 @@
 import { anyApi } from "convex/server";
 import { getAuthenticatedConvexClient, getClerkSession } from "@/lib/server-auth";
-import { getStripeCheckoutSession, getStripeCreditNotes, getStripeInvoice, getStripeConfig } from "@/lib/stripe-server.mjs";
+import { getStripeCheckoutSession, getStripeCreditNotes, getStripeInvoice, getStripePaymentReceipt, getStripeConfig } from "@/lib/stripe-server.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,11 +51,20 @@ export async function GET(request) {
     if (invoice.id !== invoiceId || invoice.status !== "paid" || !invoice.hosted_invoice_url) {
       return json({ status: "pending" }, 200);
     }
+    let receipt = null;
+    if (typeof checkout.payment_intent === "string") {
+      try {
+        receipt = await getStripePaymentReceipt(checkout.payment_intent);
+      } catch {
+        // The paid invoice stays accessible if Stripe's receipt endpoint is delayed.
+      }
+    }
     return json({
       status: "ready",
       number: invoice.number || null,
       url: invoice.hosted_invoice_url,
       pdf: invoice.invoice_pdf || null,
+      receipt,
       creditNotes: (creditNotes?.data || []).filter((note) => note.status === "issued" && note.pdf).map((note) => ({
         number: note.number || null,
         pdf: note.pdf,

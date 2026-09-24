@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   createStripeCheckoutSession,
   createStripeClientCheckoutSession,
+  getStripePaymentReceipt,
   syncCreditNotesForRefundedCharge,
 } from "../lib/stripe-server.mjs";
 import { getMyInvoiceCheckout } from "../convex/account.js";
@@ -21,6 +22,8 @@ globalThis.fetch = async (url, init = {}) => {
   if (url.endsWith("/checkout/sessions")) return reply({ id: "cs_test_invoice" });
   if (url.includes("/checkout/sessions?payment_intent=")) return reply({ data: [{ payment_intent: "pi_123", invoice: "in_123", invoice_creation: { enabled: true }, metadata: { userId: "user_123" } }] });
   if (url.includes("/refunds?charge=ch_123&limit=100")) return reply({ data: [{ id: "re_123", status: "succeeded", amount: 2800 }], has_more: false });
+  if (url.endsWith("/payment_intents/pi_123")) return reply({ id: "pi_123", status: "succeeded", latest_charge: "ch_123" });
+  if (url.endsWith("/charges/ch_123")) return reply({ id: "ch_123", payment_intent: "pi_123", paid: true, receipt_url: "https://pay.stripe.com/receipts/test" });
   if (url.includes("/credit_notes?")) return reply({ data: [], has_more: false });
   if (url.endsWith("/credit_notes")) return reply({ id: "cn_123" });
   throw new Error(`unexpected Stripe URL: ${url}`);
@@ -48,6 +51,8 @@ try {
   assert.equal(creditNote.init.body.get("refunds[0][refund]"), "re_123");
   assert.equal(creditNote.init.body.get("refunds[0][amount_refunded]"), "2800");
   assert.equal(creditNote.init.headers["Idempotency-Key"], "credit-note:re_123");
+  assert.equal(await getStripePaymentReceipt("pi_123", env), "https://pay.stripe.com/receipts/test");
+  await assert.rejects(() => getStripePaymentReceipt("invalid", env), /Invalid Stripe payment intent/);
 
   const handler = getMyInvoiceCheckout._handler;
   const records = new Map([

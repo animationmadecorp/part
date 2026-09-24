@@ -466,10 +466,10 @@ function BookingCalendarContent({ offer }) {
         onEdit={() => setSubmitState("idle")}
         onPayment={startPayment}
         paymentDisabled={isSubmitting}
-        paymentBusyLabel={availableCredit ? "Confirmation du cours…" : "Connexion à Stripe…"}
+        paymentBusyLabel={availableCredit ? "Confirmation du cours…" : "Chargement…"}
         paymentBusyMessage={availableCredit
           ? "Nous confirmons ton cours avec ton crédit. Ne relance pas l’opération."
-          : "Connexion sécurisée à Stripe en cours. Ne relance pas le paiement."}
+          : "Ouverture du paiement sécurisé. Merci de patienter."}
         paymentError={submitError}
         files={null}
         summaryTitle="Ton rendez-vous"
