@@ -215,7 +215,7 @@ for (const [handler, args] of [
 harness.asAdmin();
 
 const listed = await handlers.getAdminRequests(harness.ctx, {});
-assert.deepEqual(new Set(listed.map((request) => request.id)), new Set(["request-a", "request-b"]), "admin list reads persisted dossiers");
+assert.deepEqual(new Set(listed.map((request) => request.id)), new Set(["request-a"]), "the admin work queue includes only paid dossiers");
 assert.equal((await handlers.getAdminRequest(harness.ctx, { requestId: "request-a" })).email, "a@example.test");
 assert.equal(getLatestAdminWorkStatus([
   { eventType: "admin_work_status_changed", toStatus: "in_progress", createdAt: 20, _creationTime: 20 },
@@ -225,6 +225,7 @@ assert.equal(getLatestAdminWorkStatus([
 const eventCountBeforeStatus = harness.state.clientRequestEvents.length;
 const statusResult = await handlers.setWorkStatus(harness.ctx, { requestId: "request-a", workStatus: "in_progress" });
 assert.equal(statusResult.workStatus, "in_progress");
+await assert.rejects(() => handlers.setWorkStatus(harness.ctx, { requestId: "request-b", workStatus: "done" }), /INVALID_STATE/, "an unpaid draft cannot be processed");
 assert.equal(harness.state.clientRequestEvents.length, eventCountBeforeStatus + 1, "status writes one persisted audit event");
 assert.equal(harness.state.clientRequestEvents.at(-1).sourceId, "admin:admin-1");
 await handlers.setWorkStatus(harness.ctx, { requestId: "request-a", workStatus: "in_progress" });

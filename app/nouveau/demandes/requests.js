@@ -113,7 +113,7 @@ function RequestsContent({ initialRequestId = null }) {
   }
 
   return <main className="am-requests">
-    <header className="am-requests-heading"><div><p className="am-eyebrow">Espace de travail administrateur</p><h1>Les <em>demandes réelles.</em></h1><p>Commandes, questionnaires et fichiers lus depuis Convex. Aucun dossier de démonstration n’est ajouté.</p></div></header>
+    <header className="am-requests-heading"><div><p className="am-eyebrow">Espace de travail administrateur</p><h1>Les <em>demandes réelles.</em></h1><p>Commandes payées, questionnaires et fichiers lus depuis Convex. Aucun brouillon non payé n’entre dans cette file.</p></div></header>
     {error && <p className="am-request-error" role="alert">{error}</p>}
     {notice && <p className="am-request-success" role="status">{notice}</p>}
     <div className="am-request-tools"><StatusTabs requests={requests} selectedStatus={selectedStatus} onSelect={(status) => { setSelectedStatus(status); setSelectedId(null); setNotice(""); }}/><input className="am-field-control am-request-search" aria-label="Rechercher une demande" placeholder="Un e-mail, une offre…" value={query} onChange={(event) => setQuery(event.target.value)}/></div>

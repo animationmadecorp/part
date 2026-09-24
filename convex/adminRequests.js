@@ -100,6 +100,10 @@ function isAdminWorkStatus(value) {
   return ADMIN_WORK_STATUSES.includes(value);
 }
 
+function isPaidRequest(request) {
+  return request.status === "paid" && request.paymentStatus === "paid";
+}
+
 export function getLatestAdminWorkStatus(events = []) {
   const statusEvent = [...events]
     .sort(compareEvents)
@@ -209,7 +213,7 @@ export const getAdminRequests = queryGeneric({
   args: {},
   handler: async (ctx) => {
     await requireAdmin(ctx);
-    const requests = await ctx.db.query("clientRequests").collect();
+    const requests = (await ctx.db.query("clientRequests").collect()).filter(isPaidRequest);
     requests.sort((left, right) => right.updatedAt - left.updatedAt || right._creationTime - left._creationTime);
     return Promise.all(requests.map((request) => safeAdminRequest(ctx, request)));
   },
@@ -264,6 +268,7 @@ export const setWorkStatus = mutationGeneric({
   handler: async (ctx, args) => {
     const current = await requireAdmin(ctx);
     const request = await getRequest(ctx, args.requestId);
+    if (!isPaidRequest(request)) adminRequestError("INVALID_STATE", "Only paid requests can enter the work queue");
     const events = await getRequestEvents(ctx, request._id);
     const previousStatus = getLatestAdminWorkStatus(events);
     if (previousStatus === args.workStatus) {
